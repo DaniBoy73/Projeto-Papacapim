@@ -1,5 +1,5 @@
-/// MODELO DE DADOS: USER:
-/// Representa as informações de um usuário na rede social Papacapim.
+// MODELO DE DADOS: USER:
+// Representa as informações de um usuário na rede social Papacapim.
 
 
 class UserModel {

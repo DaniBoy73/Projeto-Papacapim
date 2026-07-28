@@ -1,5 +1,5 @@
-/// MODELO DE DADOS: POST:
-/// Representa uma postagem no feed do Papacapim, suportando curtidas e respostas.
+// MODELO DE DADOS: POST:
+// Representa uma postagem no feed do Papacapim, suportando curtidas e respostas.
  
 class PostModel {
   final String id;

@@ -12,6 +12,7 @@ class PrimaryButton extends StatelessWidget {
   final bool isOutlined;
   final IconData? icon;
   final Color? backgroundColor;
+  final double? width;
 
   const PrimaryButton({
     super.key,
@@ -21,6 +22,7 @@ class PrimaryButton extends StatelessWidget {
     this.isOutlined = false,
     this.icon,
     this.backgroundColor,
+    this.width,
   });
 
   @override
@@ -43,7 +45,7 @@ class PrimaryButton extends StatelessWidget {
       onPressed: isLoading ? null : onPressed,
       style: ElevatedButton.styleFrom(
         backgroundColor: backgroundColor ?? AppTheme.primaryColor,
-        minimumSize: const Size(double.infinity, 50),
+        minimumSize: Size(width ?? double.infinity, 50),
       ),
       child: _buildChild(context),
     );
