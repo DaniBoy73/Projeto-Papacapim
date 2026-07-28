@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../models/post_model.dart';
 import '../theme/app_theme.dart';
 import '../controllers/app_state_provider.dart';
-import '../widgets/primary_button.dart';
 
 /// TELA DE CRIAR POSTAGEM E RESPOSTA:
 /// Interface para digitação de texto com suporte a limite de caracteres e
@@ -70,14 +69,40 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          tooltip: 'Voltar',
+          onPressed: () => Navigator.pop(context),
+        ),
         title: Text(isReply ? 'Responder Postagem' : 'Nova Postagem'),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 12.0, top: 8.0, bottom: 8.0),
-            child: PrimaryButton(
-              text: isReply ? 'Responder' : 'Publicar',
-              isLoading: _isLoading,
-              onPressed: _contentController.text.trim().isNotEmpty ? _handlePublish : null,
+            child: ElevatedButton(
+              onPressed: _contentController.text.trim().isNotEmpty && !_isLoading
+                  ? _handlePublish
+                  : null,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryColor,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+              child: _isLoading
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : Text(
+                      isReply ? 'Responder' : 'Publicar',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
             ),
           ),
         ],
