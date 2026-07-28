@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 
-/// ============================================================================
-/// WIDGET REUTILIZÁVEL: CUSTOM TEXT FIELD
-/// ============================================================================
+/// WIDGET REUTILIZÁVEL: Campo de texto padrão
 /// Campo de texto padronizado com suporte a ícones, campo de senha com toggle
 /// visual (mostrar/ocultar) e mensagens de erro de validação.
+
 class CustomTextField extends StatefulWidget {
   final String label;
   final String? hint;

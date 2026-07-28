@@ -1,12 +1,7 @@
-/// ============================================================================
-/// MODELO DE DADOS: USER
-/// ============================================================================
+/// MODELO DE DADOS: USER:
 /// Representa as informações de um usuário na rede social Papacapim.
-/// 
-/// DICA PARA SABATINA:
-/// Mantemos este modelo imutável com métodos como `copyWith`. Na Parte 2,
-/// adicionaremos `factory UserModel.fromJson(Map<String, dynamic> json)` e 
-/// `Map<String, dynamic> toJson()` para desserializar as respostas da API REST.
+
+
 class UserModel {
   final String id;
   final String name;

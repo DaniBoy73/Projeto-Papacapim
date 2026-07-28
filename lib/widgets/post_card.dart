@@ -4,15 +4,9 @@ import '../theme/app_theme.dart';
 import '../controllers/app_state_provider.dart';
 import '../routes/app_routes.dart';
 
-/// ============================================================================
-/// WIDGET REUTILIZÁVEL: POST CARD
-/// ============================================================================
+/// WIDGET REUTILIZÁVEL: Cartão de postagem
 /// Componente central do Feed do Papacapim.
-/// 
-/// DICA PARA SABATINA:
-/// Garante que o botão de Excluir só é renderizado quando `post.authorId == currentUser.id`.
-/// O clique no avatar do usuário busca a entidade correspondente no `AppState` e
-/// navega diretamente para a `ProfileScreen`.
+
 class PostCard extends StatelessWidget {
   final PostModel post;
 

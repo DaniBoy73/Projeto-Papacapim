@@ -2,14 +2,9 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../controllers/app_state_provider.dart';
 
-/// ============================================================================
-/// SIMULADOR DE GALERIA DE FOTOS DO CELULAR (TELA GALLERY MOCK)
-/// ============================================================================
-/// Simula a grade de fotos da Galeria do dispositivo para escolha de avatar.
-/// 
-/// DICA PARA SABATINA:
-/// Atende ao requisito obrigatorio #7 ("Interface de seleção de foto da galeria").
-/// Na Parte 2, será substituída pela integração com `image_picker` (ImageSource.gallery).
+/// SIMULADOR DE GALERIA DE FOTOS DO CELULAR (TELA GALERIA MOCK):
+/// Simula a grade de fotos da galeria do dispositivo para escolha de avatar.
+
 class GalleryMockScreen extends StatelessWidget {
   const GalleryMockScreen({super.key});
 

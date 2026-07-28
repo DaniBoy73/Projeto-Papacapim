@@ -11,15 +11,10 @@ import '../screens/create_post_screen.dart';
 import '../screens/camera_mock_screen.dart';
 import '../screens/gallery_mock_screen.dart';
 
-/// ============================================================================
-/// SISTEMA DE ROTAS NOMEADAS DO PAPACAPIM
-/// ============================================================================
+/// SISTEMA DE ROTAS DO PAPACAPIM:
 /// Gerencia a navegação entre todas as telas do aplicativo de forma organizada.
-/// 
-/// DICA PARA SABATINA:
-/// A centralização de rotas evita telas soltas ou 'spaghetti code' no Navigator.
-/// Na Parte 2, esta estrutura é ideal para integração com rotas profundas (Deep Links)
-/// ou bibliotecas como `go_router`.
+
+
 class AppRoutes {
   static const String landing = '/';
   static const String login = '/login';

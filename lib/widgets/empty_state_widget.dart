@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 
-/// ============================================================================
-/// WIDGET REUTILIZÁVEL: EMPTY STATE WIDGET
-/// ============================================================================
+/// WIDGET REUTILIZÁVEL: Tela sem resultados
 /// Exibe uma interface amigável quando não houver registros em listas de busca ou feed.
+
 class EmptyStateWidget extends StatelessWidget {
   final IconData icon;
   final String title;

@@ -5,9 +5,7 @@ import '../widgets/post_card.dart';
 import '../widgets/empty_state_widget.dart';
 import '../routes/app_routes.dart';
 
-/// ============================================================================
-/// TELA DE FEED DE POSTAGENS (TELA FEED)
-/// ============================================================================
+/// TELA DE FEED DE POSTAGENS:
 /// Exibe a lista de postagens dividida em duas abas visuais:
 /// 1. "Seguindo": exibe apenas posts do próprio usuário e de usuários seguidos.
 /// 2. "Recomendados": exibe todas as postagens publicadas no Papacapim.

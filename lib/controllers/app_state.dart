@@ -3,18 +3,12 @@ import '../models/user_model.dart';
 import '../models/post_model.dart';
 import '../mock_data/mock_database.dart';
 
-/// ============================================================================
-/// GERENCIADOR DE ESTADO CENTRAL (APP STATE / CONTROLLER)
-/// ============================================================================
+/// GERENCIADOR DE ESTADO CENTRAL (APP STATE / CONTROLLER):
 /// Implementa a regra de negócio local utilizando `ChangeNotifier`.
 /// Todos os dados são alterados em memória reativamente, disparando `notifyListeners()`
 /// para recalcular a interface do Flutter instantaneamente.
-/// 
-/// DICA PARA SABATINA:
-/// Escolhemos `ChangeNotifier` por ser uma solução nativa do Flutter, simples,
-/// elegante e perfeitamente aderente à arquitetura limpa sem adicionar complexidade
-/// desnecessária para a prototipação. Na Parte 2, os métodos deste estado farão chamadas
-/// assíncronas para a API REST (via HTTP/Dio), armazenando tokens JWT de autenticação.
+
+
 class AppState extends ChangeNotifier {
   late UserModel _currentUser;
   late List<UserModel> _users;

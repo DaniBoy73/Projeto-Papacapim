@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 
-/// ============================================================================
-/// WIDGET REUTILIZÁVEL: PRIMARY BUTTON
-/// ============================================================================
+/// WIDGET REUTILIZÁVEL: Botão Principal
 /// Botão principal com suporte a estado de carregamento (loading spinner) e variante
 /// secundária/outlined.
+
 class PrimaryButton extends StatelessWidget {
   final String text;
   final VoidCallback? onPressed;

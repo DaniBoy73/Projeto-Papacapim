@@ -4,16 +4,10 @@ import 'controllers/app_state.dart';
 import 'controllers/app_state_provider.dart';
 import 'routes/app_routes.dart';
 
-/// ============================================================================
-/// PONTO DE ENTRADA DO APLICATIVO PAPACAPIM (PARTE 1)
-/// ============================================================================
+/// PONTO DE ENTRADA DO APLICATIVO PAPACAPIM
 /// Inicializa o estado global `AppState`, provê o `AppStateProvider` para toda
-/// a árvore de widgets e configura o tema e o sistema de rotas.
-/// 
-/// DICA PARA SABATINA:
-/// O arquivamento limpo em `main.dart` deixa a inicialização minimalista e desacoplada.
-/// Na Parte 2, aqui será feita a inicialização do container de injeção de dependências
-/// (GetIt / Provider) e clientes HTTP (Dio / Http).
+/// a árvore de widgets e configura o tema e o sistema de rotas. 
+
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   

@@ -6,11 +6,10 @@ import 'feed_screen.dart';
 import 'search_screen.dart';
 import 'profile_screen.dart';
 
-/// ============================================================================
 /// CONTAINER PRINCIPAL E NAVEGAÇÃO POR ABAS (BOTTOM NAVIGATION BAR)
-/// ============================================================================
 /// Gerencia a navegação entre as telas principais: Feed, Pesquisa e Perfil, além
-/// de oferecer o FloatingActionButton central para criar novas postagens.
+/// de oferecer o Botão flutuante para criar uma nova postagem.
+
 class MainNavigationScreen extends StatefulWidget {
   final int initialTab;
 

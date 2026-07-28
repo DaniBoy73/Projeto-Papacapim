@@ -4,11 +4,10 @@ import '../theme/app_theme.dart';
 import '../controllers/app_state_provider.dart';
 import '../widgets/primary_button.dart';
 
-/// ============================================================================
-/// TELA DE CRIAR POSTAGEM E RESPOSTA (TELA CRIAR POST)
-/// ============================================================================
+/// TELA DE CRIAR POSTAGEM E RESPOSTA:
 /// Interface para digitação de texto com suporte a limite de caracteres e
 /// vinculação de respostas a postagens existentes.
+
 class CreatePostScreen extends StatefulWidget {
   final PostModel? replyToPost;
 

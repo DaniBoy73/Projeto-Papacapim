@@ -1,15 +1,12 @@
 import '../models/user_model.dart';
 import '../models/post_model.dart';
 
-/// ============================================================================
-/// CAMADA DE DADOS MOCKADOS (MOCK DATABASE)
-/// ============================================================================
-/// Fornece o estado inicial com 4 usuários e 8 postagens pré-cadastradas para
-/// simulação sem necessidade de backend na Parte 1.
-/// 
-/// DICA PARA SABATINA:
-/// Na Parte 2 do projeto, este arquivo será substituído por um repositório real
-/// `UserRepository` e `PostRepository` que consome os endpoints HTTP via REST API.
+
+/// CAMADA DE DADOS MOCKADOS (MOCK DATABASE):
+/// Fornece dados mockados de 4 usuários e 8 postagens pré-cadastradas para
+/// simulação sem necessidade de conexão com o backend por enquanto.
+
+
 class MockDatabase {
   // Usuário padrão logado no sistema
   static UserModel loggedUser = UserModel(

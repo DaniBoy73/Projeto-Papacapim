@@ -1,11 +1,6 @@
-/// ============================================================================
-/// MODELO DE DADOS: POST
-/// ============================================================================
+/// MODELO DE DADOS: POST:
 /// Representa uma postagem no feed do Papacapim, suportando curtidas e respostas.
-/// 
-/// DICA PARA SABATINA:
-/// `parentPostId` e `parentAuthorLogin` identificam se o post é uma resposta a outro.
-/// Na Parte 2, isto mapeará o relacionamento de chaves estrangeiras com a API.
+ 
 class PostModel {
   final String id;
   final String authorId;

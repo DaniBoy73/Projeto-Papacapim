@@ -6,11 +6,10 @@ import '../widgets/primary_button.dart';
 import '../widgets/photo_source_bottom_sheet.dart';
 import '../routes/app_routes.dart';
 
-/// ============================================================================
-/// TELA DE ALTERAÇÃO DE DADOS DO USUÁRIO (TELA EDITAR PERFIL)
-/// ============================================================================
+/// TELA DE ALTERAÇÃO DE DADOS DO USUÁRIO (TELA EDITAR PERFIL):
 /// Permite alterar nome, senha, trocar a foto de perfil (via Câmera ou Galeria)
 /// e solicitar a exclusão definitiva do perfil.
+
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
 

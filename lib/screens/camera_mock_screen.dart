@@ -2,15 +2,9 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../controllers/app_state_provider.dart';
 
-/// ============================================================================
-/// SIMULADOR DE CÂMERA DO CELULAR (TELA CAMERA MOCK)
-/// ============================================================================
+/// SIMULADOR DE CÂMERA DO CELULAR (TELA CAMERA MOCK):
 /// Simula a interface da Câmera do smartphone para captura de foto de perfil.
-/// 
-/// DICA PARA SABATINA:
-/// Atende ao requisito obrigatorio #8 ("Interface de tirar foto com a câmera").
-/// Na Parte 2, esta tela será substituída pela integração direta com a câmera
-/// nativa usando a API `camera` ou `image_picker` (source: ImageSource.camera).
+
 class CameraMockScreen extends StatefulWidget {
   const CameraMockScreen({super.key});
 

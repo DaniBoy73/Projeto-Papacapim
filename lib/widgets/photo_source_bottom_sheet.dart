@@ -2,15 +2,10 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../routes/app_routes.dart';
 
-/// ============================================================================
-/// COMPONENTE MODAL: PHOTO SOURCE BOTTOM SHEET
-/// ============================================================================
-/// Modal inferior que permite ao usuário escolher entre tirar foto com a Câmera
-/// ou selecionar uma imagem da Galeria do celular.
-/// 
-/// DICA PARA SABATINA:
-/// Atende ao requisito de simulação de alteração de imagem de perfil. Na Parte 2,
-/// estes botões acionarão os plugins nativos `image_picker` e `camera`.
+/// COMPONENTE MODAL: seletor de foto ou imagem
+/// Modal inferior que permite o usuário escolher entre tirar foto com a câmera
+/// ou selecionar uma imagem da galeria do celular. 
+
 class PhotoSourceBottomSheet extends StatelessWidget {
   const PhotoSourceBottomSheet({super.key});
 

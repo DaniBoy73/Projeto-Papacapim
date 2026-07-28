@@ -1,17 +1,12 @@
 import 'package:flutter/material.dart';
 
-/// ============================================================================
-/// ARQUITETURA DE TEMA - PAPACAPIM
-/// ============================================================================
-/// Define a identidade visual do aplicativo Papacapim utilizando o Material 3.
-/// 
-/// DICA PARA SABATINA:
-/// O uso de um arquivo centralizado de tema garante a consistência visual em
-/// todas as telas (Design System). Na Parte 2, a alteração de cores ou modo
-/// escuro/claro pode ser facilmente chaveada alterando apenas este contrato.
+
+/// TEMA E VISUAL DO APP PAPACAPIM
+/// Define cores, visual e estilos do aplicativo Papacapim.
+
 class AppTheme {
   // Cores Primárias e de Destaque (Inspiradas na ave Papacapim: Verde Esmeralda e Dourado)
-  static const Color primaryColor = Color(0xFF0D7A5F); // Verde Esmeralda elegante
+  static const Color primaryColor = Color(0xFF0D7A5F); // Verde Esmeralda 
   static const Color primaryLight = Color(0xFF149D7B);
   static const Color accentColor = Color(0xFFF59E0B);  // Dourado/Amber
   static const Color backgroundColor = Color(0xFFF8FAFC); // Cinza super suave
@@ -48,7 +43,7 @@ class AppTheme {
         ),
       ),
 
-      // Estilo global dos Cards
+      // Estilo dos Cards
       cardTheme: CardThemeData(
         color: cardColor,
         elevation: 0,
@@ -59,7 +54,7 @@ class AppTheme {
         ),
       ),
 
-      // Estilo global de Campos de Texto
+      // Estilo dos Campos de Texto
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: Colors.white,
@@ -83,7 +78,7 @@ class AppTheme {
         hintStyle: const TextStyle(color: textMutedColor, fontSize: 14),
       ),
 
-      // Estilo global de Botões Elevados
+      // Estilo dos Botões Elevados
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: primaryColor,
@@ -100,7 +95,7 @@ class AppTheme {
         ),
       ),
 
-      // Estilo da BottomNavigationBar
+      // Estilo da Barra de Navegação
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: cardColor,
         selectedItemColor: primaryColor,

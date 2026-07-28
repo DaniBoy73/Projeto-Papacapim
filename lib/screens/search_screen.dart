@@ -6,10 +6,9 @@ import '../widgets/post_card.dart';
 import '../widgets/user_tile.dart';
 import '../widgets/empty_state_widget.dart';
 
-/// ============================================================================
 /// TELA DE BUSCA E PESQUISA (TELA PESQUISA)
-/// ============================================================================
 /// Interface com abas para filtrar postagens por conteúdo e usuários pelo login.
+
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
 

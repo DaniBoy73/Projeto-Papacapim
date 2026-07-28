@@ -5,10 +5,9 @@ import '../controllers/app_state_provider.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/primary_button.dart';
 
-/// ============================================================================
 /// TELA DE LOGIN SIMULADO
-/// ============================================================================
 /// Permite o acesso do usuário com campos de login e senha.
+
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 

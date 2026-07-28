@@ -5,10 +5,9 @@ import '../controllers/app_state_provider.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/primary_button.dart';
 
-/// ============================================================================
 /// TELA DE CADASTRO SIMULADO
-/// ============================================================================
 /// Form para registro de novos usuários no Papacapim.
+
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
 

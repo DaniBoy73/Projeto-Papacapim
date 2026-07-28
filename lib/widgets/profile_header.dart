@@ -5,11 +5,10 @@ import '../controllers/app_state_provider.dart';
 import '../routes/app_routes.dart';
 import 'photo_source_bottom_sheet.dart';
 
-/// ============================================================================
-/// WIDGET REUTILIZÁVEL: PROFILE HEADER
-/// ============================================================================
+/// WIDGET REUTILIZÁVEL: Cabeçalho do Perfil
 /// Renderiza o cabeçalho completo do perfil do usuário com foto, nome, estatísticas
-/// de seguidores/seguidos e botões de ação dinâmicos.
+/// de seguidores/seguidos e botões de ação.
+
 class ProfileHeader extends StatelessWidget {
   final UserModel user;
 

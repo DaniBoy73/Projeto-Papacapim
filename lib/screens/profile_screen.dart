@@ -7,11 +7,10 @@ import '../widgets/post_card.dart';
 import '../widgets/empty_state_widget.dart';
 import '../routes/app_routes.dart';
 
-/// ============================================================================
-/// TELA DE PERFIL DE USUÁRIO (TELA PERFIL)
-/// ============================================================================
+/// TELA DE PERFIL DE USUÁRIO (TELA PERFIL):
 /// Exibe as informações detalhadas do usuário e a timeline de postagens dele.
 /// Suporta visualização tanto do próprio perfil quanto do perfil de terceiros.
+
 class ProfileScreen extends StatelessWidget {
   final UserModel? targetUser;
 

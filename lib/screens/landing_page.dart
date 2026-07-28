@@ -3,10 +3,9 @@ import '../theme/app_theme.dart';
 import '../routes/app_routes.dart';
 import '../widgets/primary_button.dart';
 
-/// ============================================================================
 /// TELA INITIAL: LANDING PAGE
-/// ============================================================================
 /// Apresenta o aplicativo Papacapim com botões para Entrar ou Cadastrar-se.
+
 class LandingPage extends StatelessWidget {
   const LandingPage({super.key});
 
