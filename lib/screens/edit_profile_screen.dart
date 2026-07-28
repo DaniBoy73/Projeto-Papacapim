@@ -23,13 +23,23 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late TextEditingController _nameController;
   late TextEditingController _passwordController;
   bool _isLoading = false;
+  bool _isInitialized = false;
 
   @override
   void initState() {
     super.initState();
-    final state = AppStateProvider.of(context);
-    _nameController = TextEditingController(text: state.currentUser.name);
+    _nameController = TextEditingController();
     _passwordController = TextEditingController(text: '123456');
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_isInitialized) {
+      final state = AppStateProvider.of(context);
+      _nameController.text = state.currentUser.name;
+      _isInitialized = true;
+    }
   }
 
   @override
