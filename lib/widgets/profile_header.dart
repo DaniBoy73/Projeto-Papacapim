@@ -20,10 +20,8 @@ class ProfileHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final state = AppStateProvider.of(context);
-    final isMe = user.id == state.currentUser.id;
-
-    // Se for o próprio usuário, pega as estatísticas atualizadas em tempo real do AppState
-    final displayUser = isMe ? state.currentUser : user;
+    final displayUser = state.getUserById(user.id);
+    final isMe = displayUser.id == state.currentUser.id;
 
     return Container(
       width: double.infinity,

@@ -257,9 +257,19 @@ class AppState extends ChangeNotifier {
         .toList();
   }
 
+  /// Busca um usuário específico pelo seu ID (ou retorna currentUser se for ele)
+  UserModel getUserById(String id) {
+    if (id == _currentUser.id) return _currentUser;
+    return _users.firstWhere(
+      (u) => u.id == id,
+      orElse: () => _currentUser,
+    );
+  }
+
   /// Busca um usuário específico pelo seu login
   UserModel getUserByLogin(String login) {
     final clean = login.replaceAll('@', '').toLowerCase();
+    if (_currentUser.login.toLowerCase() == clean) return _currentUser;
     return _users.firstWhere(
       (u) => u.login.toLowerCase() == clean,
       orElse: () => _currentUser,

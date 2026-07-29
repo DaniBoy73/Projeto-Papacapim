@@ -24,7 +24,8 @@ class ProfileScreen extends StatelessWidget {
     final state = AppStateProvider.of(context);
 
     // Se nenhum usuário for passado, exibe o perfil do usuário atualmente logado
-    final user = targetUser ?? state.currentUser;
+    final initialUser = targetUser ?? state.currentUser;
+    final user = state.getUserById(initialUser.id);
     final isMe = user.id == state.currentUser.id;
 
     // Filtra apenas as postagens deste usuário específico

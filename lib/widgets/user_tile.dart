@@ -20,7 +20,8 @@ class UserTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final state = AppStateProvider.of(context);
-    final isMe = user.id == state.currentUser.id;
+    final displayUser = state.getUserById(user.id);
+    final isMe = displayUser.id == state.currentUser.id;
 
     return Card(
       child: InkWell(
@@ -28,7 +29,7 @@ class UserTile extends StatelessWidget {
           Navigator.pushNamed(
             context,
             AppRoutes.profile,
-            arguments: user,
+            arguments: displayUser,
           );
         },
         borderRadius: BorderRadius.circular(16),
@@ -40,7 +41,7 @@ class UserTile extends StatelessWidget {
               CircleAvatar(
                 radius: 24,
                 backgroundColor: AppTheme.primaryLight,
-                backgroundImage: NetworkImage(user.avatarUrl),
+                backgroundImage: NetworkImage(displayUser.avatarUrl),
               ),
               const SizedBox(width: 12),
 
@@ -50,7 +51,7 @@ class UserTile extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      user.name,
+                      displayUser.name,
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 15,
@@ -60,7 +61,7 @@ class UserTile extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                     Text(
-                      '@${user.login}',
+                      '@${displayUser.login}',
                       style: const TextStyle(
                         fontSize: 13,
                         color: AppTheme.textMutedColor,
@@ -87,13 +88,13 @@ class UserTile extends StatelessWidget {
               else
                 ElevatedButton(
                   onPressed: () {
-                    state.toggleFollow(user.id);
+                    state.toggleFollow(displayUser.id);
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: user.isFollowedByCurrentUser
+                    backgroundColor: displayUser.isFollowedByCurrentUser
                         ? Colors.grey.shade200
                         : AppTheme.primaryColor,
-                    foregroundColor: user.isFollowedByCurrentUser
+                    foregroundColor: displayUser.isFollowedByCurrentUser
                         ? AppTheme.textColor
                         : Colors.white,
                     elevation: 0,
@@ -103,11 +104,11 @@ class UserTile extends StatelessWidget {
                     ),
                   ),
                   child: Text(
-                    user.isFollowedByCurrentUser ? 'Seguindo' : 'Seguir',
+                    displayUser.isFollowedByCurrentUser ? 'Seguindo' : 'Seguir',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: user.isFollowedByCurrentUser
+                      color: displayUser.isFollowedByCurrentUser
                           ? AppTheme.textColor
                           : Colors.white,
                     ),
