@@ -10,8 +10,7 @@ import '../widgets/user_tile.dart';
 import '../widgets/empty_state_widget.dart';
 
 /// TELA DE BUSCA E PESQUISA (TELA PESQUISA)
-/// Interface com abas para filtrar postagens por conteúdo e usuários pelo login.
-
+/// Interface com abas para filtrar postagens por conteúdo e usuários reais do sistema.
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
 
@@ -25,7 +24,7 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
   String _searchQuery = '';
   List<PostModel> _postsResults = [];
   List<UserModel> _usersResults = [];
-  bool _isSearching = false;
+  bool _isLoading = false;
   bool _hasInitialData = false;
 
   @override
@@ -38,10 +37,9 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (!_hasInitialData) {
-      final state = AppStateProvider.of(context);
-      _postsResults = state.posts;
-      _usersResults = state.users;
       _hasInitialData = true;
+      final state = AppStateProvider.of(context);
+      _loadData(state);
     }
   }
 
@@ -52,27 +50,31 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
     super.dispose();
   }
 
-  Future<void> _onSearchChanged(String value, AppState state) async {
-    setState(() {
-      _searchQuery = value;
-      _isSearching = true;
-    });
+  Future<void> _loadData(AppState state) async {
+    setState(() => _isLoading = true);
 
     try {
-      final posts = await state.searchPosts(value);
-      final users = await state.searchUsers(value);
+      final postsFuture = state.searchPosts(_searchQuery);
+      final usersFuture = state.searchUsers(_searchQuery);
+      final results = await Future.wait([postsFuture, usersFuture]);
+
       if (mounted) {
         setState(() {
-          _postsResults = posts;
-          _usersResults = users;
-          _isSearching = false;
+          _postsResults = results[0] as List<PostModel>;
+          _usersResults = results[1] as List<UserModel>;
+          _isLoading = false;
         });
       }
     } catch (_) {
       if (mounted) {
-        setState(() => _isSearching = false);
+        setState(() => _isLoading = false);
       }
     }
+  }
+
+  Future<void> _onSearchChanged(String value, AppState state) async {
+    _searchQuery = value;
+    await _loadData(state);
   }
 
   @override
@@ -108,39 +110,63 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
           ),
         ),
       ),
-      body: _isSearching
+      body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryColor))
           : TabBarView(
               controller: _tabController,
               children: [
                 // ABA 1: Resultado de Postagens
-                _postsResults.isEmpty
-                    ? EmptyStateWidget(
-                        title: 'Nenhuma postagem encontrada',
-                        message: 'Tente buscar por outras palavras-chave ou termos em "$_searchQuery".',
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-                        itemCount: _postsResults.length,
-                        itemBuilder: (context, index) {
-                          return PostCard(post: _postsResults[index]);
-                        },
-                      ),
+                RefreshIndicator(
+                  onRefresh: () => _loadData(state),
+                  child: _postsResults.isEmpty
+                      ? ListView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          children: [
+                            const SizedBox(height: 60),
+                            EmptyStateWidget(
+                              title: 'Nenhuma postagem encontrada',
+                              message: _searchQuery.isEmpty
+                                  ? 'Não há publicações recentes no feed.'
+                                  : 'Tente buscar por outras palavras-chave ou termos em "$_searchQuery".',
+                            ),
+                          ],
+                        )
+                      : ListView.builder(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                          itemCount: _postsResults.length,
+                          itemBuilder: (context, index) {
+                            return PostCard(post: _postsResults[index]);
+                          },
+                        ),
+                ),
 
-                // ABA 2: Resultado de Usuários
-                _usersResults.isEmpty
-                    ? EmptyStateWidget(
-                        icon: Icons.person_search_rounded,
-                        title: 'Nenhum usuário encontrado',
-                        message: 'Não encontramos ninguém com o nome ou handle "$_searchQuery".',
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-                        itemCount: _usersResults.length,
-                        itemBuilder: (context, index) {
-                          return UserTile(user: _usersResults[index]);
-                        },
-                      ),
+                // ABA 2: Resultado de Usuários Reais do Sistema
+                RefreshIndicator(
+                  onRefresh: () => _loadData(state),
+                  child: _usersResults.isEmpty
+                      ? ListView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          children: [
+                            const SizedBox(height: 60),
+                            EmptyStateWidget(
+                              icon: Icons.person_search_rounded,
+                              title: 'Nenhum usuário encontrado',
+                              message: _searchQuery.isEmpty
+                                  ? 'Nenhum usuário cadastrado no sistema foi retornado.'
+                                  : 'Não encontramos ninguém com o nome ou handle "$_searchQuery".',
+                            ),
+                          ],
+                        )
+                      : ListView.builder(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+                          itemCount: _usersResults.length,
+                          itemBuilder: (context, index) {
+                            return UserTile(user: _usersResults[index]);
+                          },
+                        ),
+                ),
               ],
             ),
     );

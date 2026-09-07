@@ -8,6 +8,7 @@ import 'package:projeto_papacapim/controllers/app_state_provider.dart';
 import 'package:projeto_papacapim/models/user_model.dart';
 import 'package:projeto_papacapim/models/post_model.dart';
 import 'package:projeto_papacapim/screens/profile_screen.dart';
+import 'package:projeto_papacapim/widgets/user_tile.dart';
 
 class MockHttpOverrides extends HttpOverrides {
   @override
@@ -187,5 +188,57 @@ void main() {
     await appState.toggleLike(createdPostId);
     expect(appState.posts.first.isLikedByCurrentUser, isFalse);
     expect(appState.posts.first.likesCount, 0);
+  });
+
+  testWidgets('UserTile displays real user data and toggles follow state', (WidgetTester tester) async {
+    final appState = AppState();
+    final realUser = UserModel(
+      id: 'usr_real_1',
+      name: 'Carlos Just',
+      login: 'carlos_just',
+      avatarUrl: 'https://i.pravatar.cc/150?u=carlos_just',
+      followersCount: 5,
+      followingCount: 2,
+      isFollowedByCurrentUser: false,
+    );
+    appState.cacheUser(realUser);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: AppStateProvider(
+            state: appState,
+            child: UserTile(user: realUser),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Carlos Just'), findsOneWidget);
+    expect(find.text('@carlos_just'), findsOneWidget);
+    expect(find.widgetWithText(ElevatedButton, 'Seguir'), findsOneWidget);
+
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Seguir'));
+    await tester.pump();
+
+    expect(find.widgetWithText(ElevatedButton, 'Seguindo'), findsOneWidget);
+  });
+
+  testWidgets('UserTile displays Voce button for current logged user', (WidgetTester tester) async {
+    final appState = AppState();
+    final me = appState.currentUser;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: AppStateProvider(
+            state: appState,
+            child: UserTile(user: me),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.widgetWithText(OutlinedButton, 'Você'), findsOneWidget);
   });
 }

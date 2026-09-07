@@ -36,19 +36,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (!_hasLoaded) {
       final state = AppStateProvider.of(context);
       final initialUser = widget.targetUser ?? state.currentUser;
-      final user = state.getUserById(initialUser.id);
+      final user = state.getUserByLogin(initialUser.login, fallback: initialUser);
       _hasLoaded = true;
-      _loadUserPosts(user.login, state);
+      _loadProfileData(user.login, state);
     }
   }
 
-  Future<void> _loadUserPosts(String login, AppState state) async {
+  Future<void> _loadProfileData(String login, AppState state) async {
     setState(() => _isLoadingPosts = true);
     try {
-      final posts = await state.fetchUserPosts(login);
+      final results = await Future.wait([
+        state.fetchUserPosts(login),
+        state.fetchUserProfile(login),
+      ]);
       if (mounted) {
         setState(() {
-          _userPosts = posts;
+          _userPosts = results[0] as List<PostModel>;
           _isLoadingPosts = false;
         });
       }
@@ -63,8 +66,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     // Se nenhum usuário for passado, exibe o perfil do usuário atualmente logado
     final initialUser = widget.targetUser ?? state.currentUser;
-    final user = state.getUserById(initialUser.id);
-    final isMe = user.id == state.currentUser.id || user.login == state.currentUser.login;
+    final user = state.getUserByLogin(initialUser.login, fallback: initialUser);
+    final isMe = user.login.toLowerCase() == state.currentUser.login.toLowerCase() ||
+        user.id.toLowerCase() == state.currentUser.id.toLowerCase();
 
     // Postagens do usuário (da API ou filtradas do cache local)
     final postsToDisplay = _userPosts ??
@@ -86,7 +90,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
       body: RefreshIndicator(
         onRefresh: () async {
-          await _loadUserPosts(user.login, state);
+          await _loadProfileData(user.login, state);
           await state.refreshFeed();
         },
         child: CustomScrollView(

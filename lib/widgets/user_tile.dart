@@ -20,8 +20,9 @@ class UserTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final state = AppStateProvider.of(context);
-    final displayUser = state.getUserById(user.id);
-    final isMe = displayUser.id == state.currentUser.id;
+    final displayUser = state.getUserByLogin(user.login, fallback: user);
+    final isMe = displayUser.login.toLowerCase() == state.currentUser.login.toLowerCase() ||
+        displayUser.id.toLowerCase() == state.currentUser.id.toLowerCase();
 
     return Card(
       child: InkWell(
@@ -42,6 +43,11 @@ class UserTile extends StatelessWidget {
                 radius: 24,
                 backgroundColor: AppTheme.primaryLight,
                 backgroundImage: NetworkImage(displayUser.avatarUrl),
+                onBackgroundImageError: (_, _) {},
+                child: Text(
+                  displayUser.name.isNotEmpty ? displayUser.name[0].toUpperCase() : '?',
+                  style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryColor),
+                ),
               ),
               const SizedBox(width: 12),
 
