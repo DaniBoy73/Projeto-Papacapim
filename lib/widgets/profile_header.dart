@@ -123,7 +123,7 @@ class ProfileHeader extends StatelessWidget {
                   )
                 : ElevatedButton(
                     onPressed: () {
-                      state.toggleFollow(displayUser.id);
+                      state.toggleFollow(displayUser.login);
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: displayUser.isFollowedByCurrentUser

@@ -20,6 +20,9 @@ class GalleryMockScreen extends StatelessWidget {
     'https://i.pravatar.cc/150?img=22',
   ];
 
+  static const String _sampleBase64Image =
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+
   @override
   Widget build(BuildContext context) {
     final state = AppStateProvider.of(context);
@@ -57,15 +60,17 @@ class GalleryMockScreen extends StatelessWidget {
                   final isSelected = state.currentUser.avatarUrl == photoUrl;
 
                   return GestureDetector(
-                    onTap: () {
-                      state.updateAvatar(photoUrl);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Foto de perfil selecionada da galeria!'),
-                          backgroundColor: AppTheme.primaryColor,
-                        ),
-                      );
-                      Navigator.pop(context);
+                    onTap: () async {
+                      await state.updateAvatar(photoUrl, imageData: _sampleBase64Image);
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Foto de perfil selecionada e salva no back-end!'),
+                            backgroundColor: AppTheme.primaryColor,
+                          ),
+                        );
+                        Navigator.pop(context);
+                      }
                     },
                     child: Container(
                       decoration: BoxDecoration(

@@ -32,36 +32,41 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 
-  void _handleRegister() {
+  Future<void> _handleRegister() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
 
-      // Delay para efeito visual de carregamento
-      Future.delayed(const Duration(milliseconds: 600), () {
-        if (!mounted) return;
-        final state = AppStateProvider.of(context);
-        final success = state.register(
-          _nameController.text,
-          _loginController.text,
-          _passwordController.text,
+      final state = AppStateProvider.of(context);
+      final success = await state.register(
+        name: _nameController.text,
+        loginInput: _loginController.text,
+        password: _passwordController.text,
+        passwordConfirmation: _confirmPasswordController.text,
+      );
+
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Conta criada com sucesso! Seja bem-vindo ao Papacapim.'),
+            backgroundColor: AppTheme.primaryColor,
+          ),
         );
-
-        setState(() => _isLoading = false);
-
-        if (success) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Conta criada com sucesso! Seja bem-vindo ao Papacapim.'),
-              backgroundColor: AppTheme.primaryColor,
-            ),
-          );
-          Navigator.pushNamedAndRemoveUntil(
-            context,
-            AppRoutes.main,
-            (route) => false,
-          );
-        }
-      });
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          AppRoutes.main,
+          (route) => false,
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(state.errorMessage ?? 'Erro ao criar conta no servidor.'),
+            backgroundColor: AppTheme.errorColor,
+          ),
+        );
+      }
     }
   }
 

@@ -87,15 +87,22 @@ class _FeedScreenState extends State<FeedScreen> with SingleTickerProviderStateM
           // ABA 1: Perfis Seguidos
           RefreshIndicator(
             onRefresh: () async {
-              await Future.delayed(const Duration(milliseconds: 500));
+              await state.refreshFeed();
             },
             child: followedPosts.isEmpty
-                ? const EmptyStateWidget(
-                    icon: Icons.people_outline_rounded,
-                    title: 'Seu feed de seguidos está vazio',
-                    message: 'Siga outros usuários na tela de Busca para ver as postagens deles aqui!',
+                ? ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    children: const [
+                      SizedBox(height: 80),
+                      EmptyStateWidget(
+                        icon: Icons.people_outline_rounded,
+                        title: 'Seu feed de seguidos está vazio',
+                        message: 'Siga outros usuários na tela de Busca para ver as postagens deles aqui!',
+                      ),
+                    ],
                   )
                 : ListView.builder(
+                    physics: const AlwaysScrollableScrollPhysics(),
                     padding: const EdgeInsets.only(top: 8, bottom: 80),
                     itemCount: followedPosts.length,
                     itemBuilder: (context, index) {
@@ -107,15 +114,22 @@ class _FeedScreenState extends State<FeedScreen> with SingleTickerProviderStateM
           // ABA 2: Recomendados / Geral
           RefreshIndicator(
             onRefresh: () async {
-              await Future.delayed(const Duration(milliseconds: 500));
+              await state.refreshFeed();
             },
             child: allPosts.isEmpty
-                ? const EmptyStateWidget(
-                    icon: Icons.dynamic_feed_rounded,
-                    title: 'Nenhuma postagem no momento',
-                    message: 'Seja o primeiro a publicar algo no Papacapim!',
+                ? ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    children: const [
+                      SizedBox(height: 80),
+                      EmptyStateWidget(
+                        icon: Icons.dynamic_feed_rounded,
+                        title: 'Nenhuma postagem no momento',
+                        message: 'Seja o primeiro a publicar algo no Papacapim!',
+                      ),
+                    ],
                   )
                 : ListView.builder(
+                    physics: const AlwaysScrollableScrollPhysics(),
                     padding: const EdgeInsets.only(top: 8, bottom: 80),
                     itemCount: allPosts.length,
                     itemBuilder: (context, index) {

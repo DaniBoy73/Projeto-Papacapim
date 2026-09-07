@@ -34,6 +34,63 @@ class PostModel {
     this.parentContentPreview,
   });
 
+  /// Construtor de fábrica para mapear o JSON vindo da API Papacapim
+  factory PostModel.fromJson(Map<String, dynamic> json) {
+    final userMap = json['user'] is Map<String, dynamic> ? json['user'] as Map<String, dynamic> : null;
+    final authorLogin = (userMap?['login'] ?? json['authorLogin'] ?? '').toString();
+    final authorName = (userMap?['name'] ?? json['authorName'] ?? authorLogin).toString();
+    final rawProfileImage = userMap?['profile_image'] ?? json['authorAvatarUrl'];
+    final authorAvatar = (rawProfileImage != null && rawProfileImage.toString().isNotEmpty)
+        ? rawProfileImage.toString()
+        : 'https://i.pravatar.cc/150?u=$authorLogin';
+
+    DateTime parsedDate;
+    if (json['created_at'] != null) {
+      parsedDate = DateTime.tryParse(json['created_at'].toString()) ?? DateTime.now();
+    } else if (json['createdAt'] is DateTime) {
+      parsedDate = json['createdAt'] as DateTime;
+    } else {
+      parsedDate = DateTime.now();
+    }
+
+    final rawPostId = json['post_id'] ?? json['parentPostId'];
+    final parentId = rawPostId?.toString();
+
+    return PostModel(
+      id: json['id'].toString(),
+      authorId: authorLogin,
+      authorName: authorName,
+      authorLogin: authorLogin,
+      authorAvatarUrl: authorAvatar,
+      content: (json['message'] ?? json['content'] ?? '').toString(),
+      createdAt: parsedDate,
+      likesCount: (json['likes_number'] ?? json['likesCount'] ?? 0) as int,
+      commentsCount: (json['replies_number'] ?? json['commentsCount'] ?? 0) as int,
+      isLikedByCurrentUser: (json['you_liked'] ?? json['isLikedByCurrentUser'] ?? false) as bool,
+      parentPostId: parentId,
+      parentAuthorLogin: json['parentAuthorLogin']?.toString(),
+      parentContentPreview: json['parentContentPreview']?.toString(),
+    );
+  }
+
+  /// Converte o modelo de volta para formato Map/JSON
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'post_id': parentPostId,
+      'message': content,
+      'created_at': createdAt.toIso8601String(),
+      'likes_number': likesCount,
+      'replies_number': commentsCount,
+      'you_liked': isLikedByCurrentUser,
+      'user': {
+        'login': authorLogin,
+        'name': authorName,
+        'profile_image': authorAvatarUrl,
+      },
+    };
+  }
+
   /// Getter utilitário para formatar a data de publicação de forma legível
   String get formattedTime {
     final diff = DateTime.now().difference(createdAt);

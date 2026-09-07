@@ -28,7 +28,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   void initState() {
     super.initState();
     _nameController = TextEditingController();
-    _passwordController = TextEditingController(text: '123456');
+    _passwordController = TextEditingController();
   }
 
   @override
@@ -48,25 +48,37 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     super.dispose();
   }
 
-  void _handleSave() {
+  Future<void> _handleSave() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
 
-      Future.delayed(const Duration(milliseconds: 500), () {
-        if (!mounted) return;
-        final state = AppStateProvider.of(context);
-        state.updateProfile(name: _nameController.text);
+      final state = AppStateProvider.of(context);
+      final newPass = _passwordController.text.trim();
+      final success = await state.updateProfile(
+        name: _nameController.text.trim(),
+        password: newPass.isNotEmpty ? newPass : null,
+        passwordConfirmation: newPass.isNotEmpty ? newPass : null,
+      );
 
-        setState(() => _isLoading = false);
+      if (!mounted) return;
+      setState(() => _isLoading = false);
 
+      if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Perfil atualizado com sucesso!'),
+            content: Text('Perfil atualizado com sucesso no back-end!'),
             backgroundColor: AppTheme.primaryColor,
           ),
         );
         Navigator.pop(context);
-      });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(state.errorMessage ?? 'Erro ao atualizar perfil no servidor.'),
+            backgroundColor: AppTheme.errorColor,
+          ),
+        );
+      }
     }
   }
 
@@ -76,7 +88,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       builder: (ctx) => AlertDialog(
         title: const Text('Excluir Perfil?'),
         content: const Text(
-          'Esta ação removerá sua conta e todas as suas postagens permanentemente. Deseja continuar?',
+          'Esta ação removerá sua conta e todas as suas postagens permanentemente do servidor. Deseja continuar?',
         ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         actions: [
@@ -85,20 +97,31 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             child: const Text('Cancelar'),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(ctx);
-              state.deleteAccount();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Perfil excluído com sucesso.'),
-                  backgroundColor: AppTheme.errorColor,
-                ),
-              );
-              Navigator.pushNamedAndRemoveUntil(
-                context,
-                AppRoutes.landing,
-                (route) => false,
-              );
+              final success = await state.deleteAccount();
+              if (context.mounted) {
+                if (success) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Perfil excluído com sucesso do back-end.'),
+                      backgroundColor: AppTheme.errorColor,
+                    ),
+                  );
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    AppRoutes.landing,
+                    (route) => false,
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(state.errorMessage ?? 'Erro ao excluir conta.'),
+                      backgroundColor: AppTheme.errorColor,
+                    ),
+                  );
+                }
+              }
             },
             style: ElevatedButton.styleFrom(backgroundColor: AppTheme.errorColor),
             child: const Text('Sim, Excluir'),

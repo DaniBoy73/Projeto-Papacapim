@@ -30,7 +30,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     super.dispose();
   }
 
-  void _handlePublish() {
+  Future<void> _handlePublish() async {
     final text = _contentController.text.trim();
     if (text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -41,13 +41,13 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
     setState(() => _isLoading = true);
 
-    Future.delayed(const Duration(milliseconds: 400), () {
-      if (!mounted) return;
-      final state = AppStateProvider.of(context);
-      state.addPost(text, replyToPost: widget.replyToPost);
+    final state = AppStateProvider.of(context);
+    final success = await state.addPost(text, replyToPost: widget.replyToPost);
 
-      setState(() => _isLoading = false);
+    if (!mounted) return;
+    setState(() => _isLoading = false);
 
+    if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -59,7 +59,14 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
         ),
       );
       Navigator.pop(context);
-    });
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(state.errorMessage ?? 'Erro ao publicar no back-end.'),
+          backgroundColor: AppTheme.errorColor,
+        ),
+      );
+    }
   }
 
   @override

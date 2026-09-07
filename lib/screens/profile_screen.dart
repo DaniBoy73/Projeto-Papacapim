@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../models/user_model.dart';
+import '../models/post_model.dart';
 import '../theme/app_theme.dart';
+import '../controllers/app_state.dart';
 import '../controllers/app_state_provider.dart';
 import '../widgets/profile_header.dart';
 import '../widgets/post_card.dart';
@@ -11,7 +13,7 @@ import '../routes/app_routes.dart';
 /// Exibe as informações detalhadas do usuário e a timeline de postagens dele.
 /// Suporta visualização tanto do próprio perfil quanto do perfil de terceiros.
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   final UserModel? targetUser;
 
   const ProfileScreen({
@@ -20,16 +22,53 @@ class ProfileScreen extends StatelessWidget {
   });
 
   @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  List<PostModel>? _userPosts;
+  bool _isLoadingPosts = false;
+  bool _hasLoaded = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_hasLoaded) {
+      final state = AppStateProvider.of(context);
+      final initialUser = widget.targetUser ?? state.currentUser;
+      final user = state.getUserById(initialUser.id);
+      _hasLoaded = true;
+      _loadUserPosts(user.login, state);
+    }
+  }
+
+  Future<void> _loadUserPosts(String login, AppState state) async {
+    setState(() => _isLoadingPosts = true);
+    try {
+      final posts = await state.fetchUserPosts(login);
+      if (mounted) {
+        setState(() {
+          _userPosts = posts;
+          _isLoadingPosts = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoadingPosts = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final state = AppStateProvider.of(context);
 
     // Se nenhum usuário for passado, exibe o perfil do usuário atualmente logado
-    final initialUser = targetUser ?? state.currentUser;
+    final initialUser = widget.targetUser ?? state.currentUser;
     final user = state.getUserById(initialUser.id);
-    final isMe = user.id == state.currentUser.id;
+    final isMe = user.id == state.currentUser.id || user.login == state.currentUser.login;
 
-    // Filtra apenas as postagens deste usuário específico
-    final userPosts = state.posts.where((p) => p.authorLogin == user.login).toList();
+    // Postagens do usuário (da API ou filtradas do cache local)
+    final postsToDisplay = _userPosts ??
+        state.posts.where((p) => p.authorLogin.toLowerCase() == user.login.toLowerCase()).toList();
 
     return Scaffold(
       appBar: AppBar(
@@ -45,57 +84,72 @@ class ProfileScreen extends StatelessWidget {
             ),
         ],
       ),
-      body: CustomScrollView(
-        slivers: [
-          // Cabeçalho do Perfil (Header)
-          SliverToBoxAdapter(
-            child: ProfileHeader(user: user),
-          ),
+      body: RefreshIndicator(
+        onRefresh: () async {
+          await _loadUserPosts(user.login, state);
+          await state.refreshFeed();
+        },
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            // Cabeçalho do Perfil (Header)
+            SliverToBoxAdapter(
+              child: ProfileHeader(user: user),
+            ),
 
-          // Título da Seção de Postagens
-          SliverToBoxAdapter(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              color: AppTheme.backgroundColor,
-              child: Row(
-                children: [
-                  const Icon(Icons.grid_on, size: 18, color: AppTheme.textMutedColor),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Postagens de ${isMe ? 'você' : '@${user.login}'} (${userPosts.length})',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.textColor,
+            // Título da Seção de Postagens
+            SliverToBoxAdapter(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                color: AppTheme.backgroundColor,
+                child: Row(
+                  children: [
+                    const Icon(Icons.grid_on, size: 18, color: AppTheme.textMutedColor),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Postagens de ${isMe ? 'você' : '@${user.login}'} (${postsToDisplay.length})',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.textColor,
+                      ),
                     ),
-                  ),
-                ],
+                    if (_isLoadingPosts) ...[
+                      const SizedBox(width: 10),
+                      const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primaryColor),
+                      ),
+                    ],
+                  ],
+                ),
               ),
             ),
-          ),
 
-          // Lista de Postagens do Usuário
-          if (userPosts.isEmpty)
-            SliverFillRemaining(
-              hasScrollBody: false,
-              child: EmptyStateWidget(
-                icon: Icons.article_outlined,
-                title: 'Nenhuma publicação ainda',
-                message: isMe
-                    ? 'Você ainda não fez nenhuma publicação. Que tal criar uma agora?'
-                    : 'Este usuário ainda não publicou nada no Papacapim.',
+            // Lista de Postagens do Usuário
+            if (postsToDisplay.isEmpty && !_isLoadingPosts)
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: EmptyStateWidget(
+                  icon: Icons.article_outlined,
+                  title: 'Nenhuma publicação ainda',
+                  message: isMe
+                      ? 'Você ainda não fez nenhuma publicação. Que tal criar uma agora?'
+                      : 'Este usuário ainda não publicou nada no Papacapim.',
+                ),
+              )
+            else
+              SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    return PostCard(post: postsToDisplay[index]);
+                  },
+                  childCount: postsToDisplay.length,
+                ),
               ),
-            )
-          else
-            SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) {
-                  return PostCard(post: userPosts[index]);
-                },
-                childCount: userPosts.length,
-              ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }
