@@ -79,7 +79,18 @@ class ApiService {
       } else if (decodedBody.containsKey('message')) {
         errorMessage = decodedBody['message'].toString();
       } else if (decodedBody.containsKey('errors')) {
-        errorMessage = decodedBody['errors'].toString();
+        final errors = decodedBody['errors'];
+        if (errors is Map<String, dynamic>) {
+          errorMessage = _formatValidationMap(errors);
+        } else {
+          errorMessage = errors.toString();
+        }
+      } else {
+        // Formato comum de validação (ex: {"login": ["has already been taken"]})
+        final formatted = _formatValidationMap(decodedBody);
+        if (formatted.isNotEmpty) {
+          errorMessage = formatted;
+        }
       }
     } else if (response.statusCode == 401) {
       errorMessage = 'Sessão expirada ou não autorizada. Faça login novamente.';
@@ -88,6 +99,56 @@ class ApiService {
     }
 
     throw ApiException(statusCode: response.statusCode, message: errorMessage);
+  }
+
+  /// Formata e traduz mapas de erros de validação da API
+  String _formatValidationMap(Map<String, dynamic> errorMap) {
+    final messages = <String>[];
+    for (final entry in errorMap.entries) {
+      final field = _translateFieldName(entry.key);
+      final rawValue = entry.value;
+
+      String errorText;
+      if (rawValue is List) {
+        errorText = rawValue.map((e) => _translateErrorMessage(e.toString())).join(', ');
+      } else {
+        errorText = _translateErrorMessage(rawValue.toString());
+      }
+      messages.add('$field $errorText');
+    }
+    return messages.join('\n');
+  }
+
+  /// Traduz o nome do campo para português amigável
+  String _translateFieldName(String field) {
+    switch (field.toLowerCase()) {
+      case 'name':
+        return 'Nome';
+      case 'login':
+        return 'Login';
+      case 'password':
+        return 'Senha';
+      case 'password_confirmation':
+        return 'Confirmação de senha';
+      case 'message':
+        return 'Mensagem';
+      default:
+        return field;
+    }
+  }
+
+  /// Traduz mensagens de erro comuns da API
+  String _translateErrorMessage(String error) {
+    if (error.contains("can't be blank")) {
+      return 'não pode ficar em branco.';
+    } else if (error.contains('has already been taken')) {
+      return 'já está em uso. Escolha outro.';
+    } else if (error.contains('is too short')) {
+      return 'é muito curto(a).';
+    } else if (error.contains("doesn't match")) {
+      return 'não coincide com a senha.';
+    }
+    return error;
   }
 
   // ==========================================================================
@@ -145,17 +206,23 @@ class ApiService {
     final url = Uri.parse('$baseUrl/users');
     final cleanLogin = login.trim().replaceAll('@', '');
 
+    final payload = {
+      'name': name.trim(),
+      'login': cleanLogin,
+      'password': password,
+      'password_confirmation': passwordConfirmation,
+      'user': {
+        'name': name.trim(),
+        'login': cleanLogin,
+        'password': password,
+        'password_confirmation': passwordConfirmation,
+      }
+    };
+
     final response = await _client.post(
       url,
       headers: {'Content-Type': 'application/json; charset=utf-8', 'Accept': 'application/json'},
-      body: jsonEncode({
-        'user': {
-          'name': name.trim(),
-          'login': cleanLogin,
-          'password': password,
-          'password_confirmation': passwordConfirmation,
-        }
-      }),
+      body: jsonEncode(payload),
     );
 
     final data = _handleResponse(response) as Map<String, dynamic>;
