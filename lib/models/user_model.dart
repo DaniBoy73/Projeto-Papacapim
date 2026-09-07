@@ -26,12 +26,14 @@ class UserModel {
   /// Construtor de fábrica para desserializar JSON vindo da API Papacapim
   factory UserModel.fromJson(Map<String, dynamic> json, {bool isCurrentUser = false}) {
     final login = (json['login'] ?? '').toString();
+    final name = (json['name'] ?? login).toString();
     final profileImage = json['profile_image'] ?? json['avatarUrl'];
-    final fallbackAvatar = 'https://i.pravatar.cc/150?u=$login';
+    final cleanName = name.trim().isNotEmpty ? name.trim() : login.trim();
+    final fallbackAvatar = 'https://ui-avatars.com/api/?name=${Uri.encodeComponent(cleanName)}&background=10B981&color=fff&size=150&bold=true';
 
     return UserModel(
       id: json['id']?.toString() ?? login,
-      name: (json['name'] ?? login).toString(),
+      name: name,
       login: login,
       avatarUrl: (profileImage != null && profileImage.toString().isNotEmpty)
           ? profileImage.toString()

@@ -9,6 +9,7 @@ import 'package:projeto_papacapim/models/user_model.dart';
 import 'package:projeto_papacapim/models/post_model.dart';
 import 'package:projeto_papacapim/screens/profile_screen.dart';
 import 'package:projeto_papacapim/widgets/user_tile.dart';
+import 'package:projeto_papacapim/widgets/avatar/app_avatar.dart';
 
 class MockHttpOverrides extends HttpOverrides {
   @override
@@ -240,5 +241,21 @@ void main() {
     );
 
     expect(find.widgetWithText(OutlinedButton, 'Você'), findsOneWidget);
+  });
+
+  testWidgets('AppAvatar renders fallback initial when image is loading or empty', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: AppAvatar(
+            imageUrl: 'https://ui-avatars.com/api/?name=Caio+C&background=10B981&color=fff',
+            radius: 30,
+            name: 'Caio C',
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('C'), findsOneWidget);
   });
 }

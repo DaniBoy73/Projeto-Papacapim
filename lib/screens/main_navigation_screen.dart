@@ -5,6 +5,7 @@ import '../routes/app_routes.dart';
 import 'feed_screen.dart';
 import 'search_screen.dart';
 import 'profile_screen.dart';
+import '../widgets/avatar/app_avatar.dart';
 
 /// CONTAINER PRINCIPAL E NAVEGAÇÃO POR ABAS (BOTTOM NAVIGATION BAR)
 /// Gerencia a navegação entre as telas principais: Feed, Pesquisa e Perfil, além
@@ -66,17 +67,21 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             label: 'Buscar',
           ),
           BottomNavigationBarItem(
-            icon: CircleAvatar(
+            icon: AppAvatar(
               radius: 12,
-              backgroundColor: AppTheme.primaryLight,
-              backgroundImage: NetworkImage(state.currentUser.avatarUrl),
+              imageUrl: state.currentUser.avatarUrl,
+              name: state.currentUser.name,
             ),
-            activeIcon: CircleAvatar(
-              radius: 13,
-              backgroundColor: AppTheme.primaryColor,
-              child: CircleAvatar(
+            activeIcon: Container(
+              padding: const EdgeInsets.all(1.5),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: AppTheme.primaryColor, width: 2),
+              ),
+              child: AppAvatar(
                 radius: 11,
-                backgroundImage: NetworkImage(state.currentUser.avatarUrl),
+                imageUrl: state.currentUser.avatarUrl,
+                name: state.currentUser.name,
               ),
             ),
             label: 'Perfil',

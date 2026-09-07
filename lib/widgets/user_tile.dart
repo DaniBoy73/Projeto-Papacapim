@@ -3,6 +3,7 @@ import '../models/user_model.dart';
 import '../theme/app_theme.dart';
 import '../controllers/app_state_provider.dart';
 import '../routes/app_routes.dart';
+import 'avatar/app_avatar.dart';
 
 /// ============================================================================
 /// WIDGET REUTILIZÁVEL: USER TILE
@@ -39,15 +40,10 @@ class UserTile extends StatelessWidget {
           child: Row(
             children: [
               // Avatar do Usuário
-              CircleAvatar(
+              AppAvatar(
+                imageUrl: displayUser.avatarUrl,
                 radius: 24,
-                backgroundColor: AppTheme.primaryLight,
-                backgroundImage: NetworkImage(displayUser.avatarUrl),
-                onBackgroundImageError: (_, _) {},
-                child: Text(
-                  displayUser.name.isNotEmpty ? displayUser.name[0].toUpperCase() : '?',
-                  style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryColor),
-                ),
+                name: displayUser.name,
               ),
               const SizedBox(width: 12),
 

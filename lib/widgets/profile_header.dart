@@ -4,6 +4,7 @@ import '../theme/app_theme.dart';
 import '../controllers/app_state_provider.dart';
 import '../routes/app_routes.dart';
 import 'photo_source_bottom_sheet.dart';
+import 'avatar/app_avatar.dart';
 
 /// WIDGET REUTILIZÁVEL: Cabeçalho do Perfil
 /// Renderiza o cabeçalho completo do perfil do usuário com foto, nome, estatísticas
@@ -31,23 +32,12 @@ class ProfileHeader extends StatelessWidget {
       child: Column(
         children: [
           // Avatar com selo de Câmera (se for o próprio perfil)
-          Stack(
-            children: [
-              CircleAvatar(
-                radius: 46,
-                backgroundColor: AppTheme.primaryLight,
-                backgroundImage: NetworkImage(displayUser.avatarUrl),
-                onBackgroundImageError: (_, _) {},
-                child: Text(
-                  displayUser.name.isNotEmpty ? displayUser.name[0].toUpperCase() : '?',
-                  style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppTheme.primaryColor),
-                ),
-              ),
-              if (isMe)
-                Positioned(
-                  bottom: 0,
-                  right: 0,
-                  child: GestureDetector(
+          AppAvatar(
+            imageUrl: displayUser.avatarUrl,
+            radius: 46,
+            name: displayUser.name,
+            overlayBadge: isMe
+                ? GestureDetector(
                     onTap: () {
                       PhotoSourceBottomSheet.show(context);
                     },
@@ -69,9 +59,8 @@ class ProfileHeader extends StatelessWidget {
                         color: Colors.white,
                       ),
                     ),
-                  ),
-                ),
-            ],
+                  )
+                : null,
           ),
           const SizedBox(height: 12),
 
