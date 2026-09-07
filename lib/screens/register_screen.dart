@@ -127,6 +127,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     if (val == null || val.trim().isEmpty) {
                       return 'Informe o login desejado';
                     }
+                    if (val.trim().replaceAll('@', '').length < 3) {
+                      return 'O login deve ter pelo menos 3 caracteres';
+                    }
                     return null;
                   },
                 ),
