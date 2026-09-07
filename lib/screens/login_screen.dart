@@ -17,8 +17,8 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _loginController = TextEditingController(text: 'carlos_papacapim');
-  final _passwordController = TextEditingController(text: '123456');
+  final _loginController = TextEditingController();
+  final _passwordController = TextEditingController();
   bool _isLoading = false;
 
   @override
@@ -28,36 +28,40 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _handleLogin() {
+  Future<void> _handleLogin() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
 
-      // Simulação de delay de rede
-      Future.delayed(const Duration(milliseconds: 600), () {
-        if (!mounted) return;
-        final state = AppStateProvider.of(context);
-        final success = state.login(
-          _loginController.text,
-          _passwordController.text,
+      final state = AppStateProvider.of(context);
+      final success = await state.login(
+        _loginController.text,
+        _passwordController.text,
+      );
+
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Bem-vindo de volta, ${state.currentUser.name}!'),
+            backgroundColor: AppTheme.primaryColor,
+          ),
         );
-
-        setState(() => _isLoading = false);
-
-        if (success) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Bem-vindo de volta, ${state.currentUser.name}!'),
-              backgroundColor: AppTheme.primaryColor,
-            ),
-          );
-          // Navega para o feed principal limpando a pilha de telas
-          Navigator.pushNamedAndRemoveUntil(
-            context,
-            AppRoutes.main,
-            (route) => false,
-          );
-        }
-      });
+        // Navega para o feed principal limpando a pilha de telas
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          AppRoutes.main,
+          (route) => false,
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(state.errorMessage ?? 'Falha ao autenticar. Verifique seus dados.'),
+            backgroundColor: AppTheme.errorColor,
+          ),
+        );
+      }
     }
   }
 

@@ -18,7 +18,8 @@ class PostCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final state = AppStateProvider.of(context);
-    final isOwnPost = post.authorId == state.currentUser.id;
+    final isOwnPost = post.authorLogin.toLowerCase() == state.currentUser.login.toLowerCase() ||
+        post.authorId == state.currentUser.id;
 
     return Card(
       child: Padding(

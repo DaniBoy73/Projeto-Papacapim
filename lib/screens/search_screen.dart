@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import '../models/post_model.dart';
+import '../models/user_model.dart';
 import '../theme/app_theme.dart';
+import '../controllers/app_state.dart';
 import '../controllers/app_state_provider.dart';
 import '../widgets/search_bar_widget.dart';
 import '../widgets/post_card.dart';
@@ -20,11 +23,26 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
   final TextEditingController _searchController = TextEditingController();
   late TabController _tabController;
   String _searchQuery = '';
+  List<PostModel> _postsResults = [];
+  List<UserModel> _usersResults = [];
+  bool _isSearching = false;
+  bool _hasInitialData = false;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_hasInitialData) {
+      final state = AppStateProvider.of(context);
+      _postsResults = state.posts;
+      _usersResults = state.users;
+      _hasInitialData = true;
+    }
   }
 
   @override
@@ -34,12 +52,32 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
     super.dispose();
   }
 
+  Future<void> _onSearchChanged(String value, AppState state) async {
+    setState(() {
+      _searchQuery = value;
+      _isSearching = true;
+    });
+
+    try {
+      final posts = await state.searchPosts(value);
+      final users = await state.searchUsers(value);
+      if (mounted) {
+        setState(() {
+          _postsResults = posts;
+          _usersResults = users;
+          _isSearching = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _isSearching = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = AppStateProvider.of(context);
-
-    final filteredPosts = state.searchPosts(_searchQuery);
-    final filteredUsers = state.searchUsers(_searchQuery);
 
     return Scaffold(
       appBar: AppBar(
@@ -53,11 +91,7 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
                 child: SearchBarWidget(
                   controller: _searchController,
                   hintText: 'Buscar por termos, #tags ou @usuarios...',
-                  onChanged: (value) {
-                    setState(() {
-                      _searchQuery = value;
-                    });
-                  },
+                  onChanged: (value) => _onSearchChanged(value, state),
                 ),
               ),
               TabBar(
@@ -66,47 +100,49 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
                 unselectedLabelColor: AppTheme.textMutedColor,
                 indicatorColor: AppTheme.primaryColor,
                 tabs: [
-                  Tab(text: 'Postagens (${filteredPosts.length})'),
-                  Tab(text: 'Usuários (${filteredUsers.length})'),
+                  Tab(text: 'Postagens (${_postsResults.length})'),
+                  Tab(text: 'Usuários (${_usersResults.length})'),
                 ],
               ),
             ],
           ),
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          // ABA 1: Resultado de Postagens
-          filteredPosts.isEmpty
-              ? EmptyStateWidget(
-                  title: 'Nenhuma postagem encontrada',
-                  message: 'Tente buscar por outras palavras-chave ou termos em "$_searchQuery".',
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-                  itemCount: filteredPosts.length,
-                  itemBuilder: (context, index) {
-                    return PostCard(post: filteredPosts[index]);
-                  },
-                ),
+      body: _isSearching
+          ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryColor))
+          : TabBarView(
+              controller: _tabController,
+              children: [
+                // ABA 1: Resultado de Postagens
+                _postsResults.isEmpty
+                    ? EmptyStateWidget(
+                        title: 'Nenhuma postagem encontrada',
+                        message: 'Tente buscar por outras palavras-chave ou termos em "$_searchQuery".',
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                        itemCount: _postsResults.length,
+                        itemBuilder: (context, index) {
+                          return PostCard(post: _postsResults[index]);
+                        },
+                      ),
 
-          // ABA 2: Resultado de Usuários
-          filteredUsers.isEmpty
-              ? EmptyStateWidget(
-                  icon: Icons.person_search_rounded,
-                  title: 'Nenhum usuário encontrado',
-                  message: 'Não encontramos ninguém com o nome ou handle "$_searchQuery".',
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-                  itemCount: filteredUsers.length,
-                  itemBuilder: (context, index) {
-                    return UserTile(user: filteredUsers[index]);
-                  },
-                ),
-        ],
-      ),
+                // ABA 2: Resultado de Usuários
+                _usersResults.isEmpty
+                    ? EmptyStateWidget(
+                        icon: Icons.person_search_rounded,
+                        title: 'Nenhum usuário encontrado',
+                        message: 'Não encontramos ninguém com o nome ou handle "$_searchQuery".',
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+                        itemCount: _usersResults.length,
+                        itemBuilder: (context, index) {
+                          return UserTile(user: _usersResults[index]);
+                        },
+                      ),
+              ],
+            ),
     );
   }
 }

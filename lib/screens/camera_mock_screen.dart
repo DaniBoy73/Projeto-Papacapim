@@ -25,27 +25,28 @@ class _CameraMockScreenState extends State<CameraMockScreen> {
     'https://i.pravatar.cc/150?img=47',
   ];
 
-  void _takePicture() {
+  static const String _sampleBase64Image =
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+
+  Future<void> _takePicture() async {
     setState(() => _isCapturing = true);
 
-    // Simulação do disparo da câmera e processamento da imagem
-    Future.delayed(const Duration(milliseconds: 600), () {
-      if (!mounted) return;
-      final state = AppStateProvider.of(context);
-      
-      // Seleciona uma nova URL de avatar simulada
-      final newAvatar = _samplePhotos[DateTime.now().second % _samplePhotos.length];
-      state.updateAvatar(newAvatar);
+    await Future.delayed(const Duration(milliseconds: 600));
+    if (!mounted) return;
+    final state = AppStateProvider.of(context);
 
+    final newAvatar = _samplePhotos[DateTime.now().second % _samplePhotos.length];
+    await state.updateAvatar(newAvatar, imageData: _sampleBase64Image);
+
+    if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Foto capturada e salva no perfil com sucesso!'),
+          content: Text('Foto capturada e salva no back-end com sucesso!'),
           backgroundColor: AppTheme.primaryColor,
         ),
       );
-
       Navigator.pop(context);
-    });
+    }
   }
 
   @override
