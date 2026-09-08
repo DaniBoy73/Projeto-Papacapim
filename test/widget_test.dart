@@ -243,19 +243,33 @@ void main() {
     expect(find.widgetWithText(OutlinedButton, 'Você'), findsOneWidget);
   });
 
-  testWidgets('AppAvatar renders fallback initial when image is loading or empty', (WidgetTester tester) async {
+  testWidgets('AppAvatar renders initial letter only when user has no photo', (WidgetTester tester) async {
+    // Usuário sem foto de perfil: deve exibir a letra inicial 'C'
     await tester.pumpWidget(
       const MaterialApp(
         home: Scaffold(
           body: AppAvatar(
-            imageUrl: 'https://ui-avatars.com/api/?name=Caio+C&background=10B981&color=fff',
+            imageUrl: '',
             radius: 30,
             name: 'Caio C',
           ),
         ),
       ),
     );
-
     expect(find.text('C'), findsOneWidget);
+
+    // Usuário COM foto de perfil: NÃO deve sobrepor a letra inicial 'C' na foto
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: AppAvatar(
+            imageUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
+            radius: 30,
+            name: 'Caio C',
+          ),
+        ),
+      ),
+    );
+    expect(find.text('C'), findsNothing);
   });
 }

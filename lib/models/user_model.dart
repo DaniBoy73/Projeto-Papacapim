@@ -28,22 +28,24 @@ class UserModel {
     final login = (json['login'] ?? '').toString();
     final name = (json['name'] ?? login).toString();
     final profileImage = json['profile_image'] ?? json['avatarUrl'];
-    final cleanName = name.trim().isNotEmpty ? name.trim() : login.trim();
-    final fallbackAvatar = 'https://ui-avatars.com/api/?name=${Uri.encodeComponent(cleanName)}&background=10B981&color=fff&size=150&bold=true';
+    final rawUrl = (profileImage != null && profileImage.toString().isNotEmpty)
+        ? profileImage.toString()
+        : '';
 
     return UserModel(
       id: json['id']?.toString() ?? login,
       name: name,
       login: login,
-      avatarUrl: (profileImage != null && profileImage.toString().isNotEmpty)
-          ? profileImage.toString()
-          : fallbackAvatar,
+      avatarUrl: rawUrl,
       followersCount: (json['followers_number'] ?? json['followersCount'] ?? 0) as int,
       followingCount: (json['following_number'] ?? json['followingCount'] ?? 0) as int,
       isFollowedByCurrentUser: (json['you_follow'] ?? json['isFollowedByCurrentUser'] ?? false) as bool,
       isCurrentUser: isCurrentUser || (json['isCurrentUser'] ?? false) as bool,
     );
   }
+
+  /// Indica se o usuário possui foto de perfil real cadastrada
+  bool get hasProfileImage => avatarUrl.isNotEmpty;
 
   /// Converte o modelo de volta para formato Map/JSON
   Map<String, dynamic> toJson() {

@@ -10,19 +10,23 @@ Widget buildPlatformAvatar({
   Widget? overlayBadge,
   VoidCallback? onTap,
 }) {
+  final hasImage = imageUrl.isNotEmpty;
+
   Widget avatar = CircleAvatar(
     radius: size / 2,
     backgroundColor: backgroundColor,
-    backgroundImage: imageUrl.isNotEmpty ? NetworkImage(imageUrl) : null,
-    onBackgroundImageError: (_, _) {},
-    child: Text(
-      fallbackText,
-      style: TextStyle(
-        fontSize: size * 0.4,
-        fontWeight: FontWeight.bold,
-        color: textColor,
-      ),
-    ),
+    backgroundImage: hasImage ? NetworkImage(imageUrl) : null,
+    onBackgroundImageError: hasImage ? (_, _) {} : null,
+    child: hasImage
+        ? null
+        : Text(
+            fallbackText,
+            style: TextStyle(
+              fontSize: size * 0.4,
+              fontWeight: FontWeight.bold,
+              color: textColor,
+            ),
+          ),
   );
 
   if (overlayBadge != null) {
