@@ -34,10 +34,10 @@ class AppState extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
   bool get isAuthenticated => api.isAuthenticated;
 
-  // Inicializa com dados padrão locais (ou mockados antes de autenticar)
+  // Inicializa com dados padrão locais (sem usuários mockados)
   void _initData() {
     _currentUser = MockDatabase.loggedUser;
-    _users = MockDatabase.getInitialUsers();
+    _users = [];
     _allPosts = MockDatabase.getInitialPosts();
     _followedPosts = _allPosts.where((p) => p.authorLogin != _currentUser.login).toList();
   }
@@ -71,15 +71,18 @@ class AppState extends ChangeNotifier {
           id: api.currentUserLogin ?? loginInput.trim(),
           name: loginInput.trim(),
           login: api.currentUserLogin ?? loginInput.trim(),
-          avatarUrl: 'https://i.pravatar.cc/150?u=${api.currentUserLogin}',
+          avatarUrl: 'https://ui-avatars.com/api/?name=${Uri.encodeComponent(loginInput.trim())}&background=10B981&color=fff&size=150&bold=true',
           followersCount: 0,
           followingCount: 0,
           isCurrentUser: true,
         );
       }
 
-      // 3. Carrega o feed da API
-      await refreshFeed();
+      // 3. Carrega o feed da API e os usuários reais do sistema
+      await Future.wait([
+        refreshFeed(),
+        fetchUsers(),
+      ]);
 
       _isLoading = false;
       notifyListeners();
@@ -148,21 +151,26 @@ class AppState extends ChangeNotifier {
   // 2. POSTAGENS E FEED (API)
   // ==========================================================================
 
-  /// Atualiza o feed buscando posts de quem o usuário segue e recomendados da API
+  /// Atualiza o feed buscando posts e sincroniza os usuários reais da API
   Future<void> refreshFeed() async {
     if (!api.isAuthenticated) return;
 
     try {
-      // Busca posts de seguidos (feed=1) e recomendados (sem feed)
+      // Busca posts de seguidos (feed=1), recomendados (sem feed) e usuários reais
       final results = await Future.wait([
         api.getPosts(feedOnly: true),
         api.getPosts(feedOnly: false),
         api.getMyProfile().catchError((_) => _currentUser),
+        api.searchUsers('').catchError((_) => <UserModel>[]),
       ]);
 
       _followedPosts = results[0] as List<PostModel>;
       _allPosts = results[1] as List<PostModel>;
       _currentUser = (results[2] as UserModel).copyWith(isCurrentUser: true);
+      final apiUsers = results[3] as List<UserModel>;
+      if (apiUsers.isNotEmpty) {
+        _users = apiUsers;
+      }
       notifyListeners();
     } catch (e) {
       _errorMessage = e.toString();
@@ -308,16 +316,20 @@ class AppState extends ChangeNotifier {
 
   /// Alterna o estado de seguir/deixar de seguir um usuário no back-end
   Future<void> toggleFollow(String userIdOrLogin) async {
-    final uIndex = _users.indexWhere((u) => u.id == userIdOrLogin || u.login == userIdOrLogin);
+    final clean = userIdOrLogin.replaceAll('@', '').toLowerCase();
+    final uIndex = _users.indexWhere((u) => u.id.toLowerCase() == clean || u.login.toLowerCase() == clean);
     UserModel? targetUser = uIndex != -1 ? _users[uIndex] : null;
 
     if (targetUser == null) {
-      try {
-        targetUser = await api.getUser(userIdOrLogin);
-      } catch (_) {}
+      if (api.isAuthenticated) {
+        try {
+          targetUser = await api.getUser(clean);
+        } catch (_) {}
+      }
+      targetUser ??= getUserByLogin(clean);
     }
 
-    if (targetUser == null || targetUser.login == _currentUser.login) return;
+    if (targetUser.login.toLowerCase() == _currentUser.login.toLowerCase()) return;
 
     final newFollowState = !targetUser.isFollowedByCurrentUser;
     final newFollowersCount = newFollowState
@@ -466,27 +478,56 @@ class AppState extends ChangeNotifier {
         .toList();
   }
 
-  /// Busca usuários na API por termo
-  Future<List<UserModel>> searchUsers(String query) async {
-    if (query.trim().isEmpty) return _users;
+  /// Atualiza ou insere um usuário no cache em memória
+  void cacheUser(UserModel user) {
+    final clean = user.login.replaceAll('@', '').toLowerCase();
+    final idx = _users.indexWhere((u) => u.login.toLowerCase() == clean || u.id == user.id);
+    if (idx != -1) {
+      _users[idx] = user;
+    } else {
+      _users.add(user);
+    }
+  }
 
+  /// Carrega a lista completa de usuários reais do sistema diretamente da API
+  Future<List<UserModel>> fetchUsers() async {
+    if (api.isAuthenticated) {
+      try {
+        final realUsers = await api.searchUsers('');
+        _users = realUsers;
+        notifyListeners();
+        return realUsers;
+      } catch (_) {}
+    }
+    return _users;
+  }
+
+  /// Carrega os dados atualizados de um perfil na API
+  Future<UserModel?> fetchUserProfile(String login) async {
+    if (!api.isAuthenticated) return null;
+    try {
+      final user = await api.getUser(login);
+      cacheUser(user);
+      notifyListeners();
+      return user;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Busca usuários na API por termo (ou retorna todos os usuários reais se query vazia)
+  Future<List<UserModel>> searchUsers(String query) async {
     if (api.isAuthenticated) {
       try {
         final apiResults = await api.searchUsers(query.trim());
-        if (apiResults.isNotEmpty) {
-          // Atualiza o cache local de usuários
-          for (final u in apiResults) {
-            final idx = _users.indexWhere((existing) => existing.login == u.login);
-            if (idx != -1) {
-              _users[idx] = u;
-            } else {
-              _users.add(u);
-            }
-          }
-          return apiResults;
+        for (final u in apiResults) {
+          cacheUser(u);
         }
+        return apiResults;
       } catch (_) {}
     }
+
+    if (query.trim().isEmpty) return _users;
 
     final term = query.toLowerCase().trim();
     return _users
@@ -506,22 +547,33 @@ class AppState extends ChangeNotifier {
     return _allPosts.where((p) => p.authorLogin.toLowerCase() == login.toLowerCase()).toList();
   }
 
-  /// Busca um usuário específico pelo seu ID (ou retorna currentUser se for ele)
-  UserModel getUserById(String id) {
-    if (id == _currentUser.id || id == _currentUser.login) return _currentUser;
+  /// Busca um usuário específico pelo seu ID (ou retorna fallback/currentUser)
+  UserModel getUserById(String id, {UserModel? fallback}) {
+    final clean = id.replaceAll('@', '').toLowerCase();
+    if (clean == _currentUser.id.toLowerCase() || clean == _currentUser.login.toLowerCase()) {
+      return _currentUser;
+    }
     return _users.firstWhere(
-      (u) => u.id == id || u.login == id,
-      orElse: () => _currentUser,
+      (u) => u.id.toLowerCase() == clean || u.login.toLowerCase() == clean,
+      orElse: () => fallback ?? getUserByLogin(id),
     );
   }
 
   /// Busca um usuário específico pelo seu login
-  UserModel getUserByLogin(String login) {
+  UserModel getUserByLogin(String login, {UserModel? fallback}) {
     final clean = login.replaceAll('@', '').toLowerCase();
     if (_currentUser.login.toLowerCase() == clean) return _currentUser;
     return _users.firstWhere(
       (u) => u.login.toLowerCase() == clean,
-      orElse: () => _currentUser,
+      orElse: () => fallback ?? UserModel(
+        id: clean,
+        name: clean == 'juliana_tech' ? 'Juliana Tech' : clean,
+        login: clean,
+        avatarUrl: 'https://ui-avatars.com/api/?name=${Uri.encodeComponent(clean)}&background=10B981&color=fff&size=150&bold=true',
+        followersCount: 0,
+        followingCount: 0,
+        isFollowedByCurrentUser: false,
+      ),
     );
   }
 }

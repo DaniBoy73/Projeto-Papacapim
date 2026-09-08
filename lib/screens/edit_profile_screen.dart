@@ -5,6 +5,7 @@ import '../widgets/custom_text_field.dart';
 import '../widgets/primary_button.dart';
 import '../widgets/photo_source_bottom_sheet.dart';
 import '../routes/app_routes.dart';
+import '../widgets/avatar/app_avatar.dart';
 
 /// TELA DE ALTERAÇÃO DE DADOS DO USUÁRIO (TELA EDITAR PERFIL):
 /// Permite alterar nome, senha, trocar a foto de perfil (via Câmera ou Galeria)
@@ -148,32 +149,27 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 // Avatar com Botão de Trocar Foto
-                Stack(
-                  alignment: Alignment.bottomRight,
-                  children: [
-                    CircleAvatar(
-                      radius: 54,
-                      backgroundColor: AppTheme.primaryLight,
-                      backgroundImage: NetworkImage(state.currentUser.avatarUrl),
-                    ),
-                    InkWell(
-                      onTap: () {
-                        PhotoSourceBottomSheet.show(context);
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: const BoxDecoration(
-                          color: AppTheme.primaryColor,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.camera_alt,
-                          color: Colors.white,
-                          size: 20,
-                        ),
+                AppAvatar(
+                  radius: 54,
+                  imageUrl: state.currentUser.avatarUrl,
+                  name: state.currentUser.name,
+                  overlayBadge: InkWell(
+                    onTap: () {
+                      PhotoSourceBottomSheet.show(context);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: const BoxDecoration(
+                        color: AppTheme.primaryColor,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.camera_alt,
+                        color: Colors.white,
+                        size: 20,
                       ),
                     ),
-                  ],
+                  ),
                 ),
                 const SizedBox(height: 10),
                 TextButton.icon(

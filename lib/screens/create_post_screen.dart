@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/post_model.dart';
 import '../theme/app_theme.dart';
 import '../controllers/app_state_provider.dart';
+import '../widgets/avatar/app_avatar.dart';
 
 /// TELA DE CRIAR POSTAGEM E RESPOSTA:
 /// Interface para digitação de texto com suporte a limite de caracteres e
@@ -168,10 +169,10 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  CircleAvatar(
+                  AppAvatar(
                     radius: 22,
-                    backgroundColor: AppTheme.primaryLight,
-                    backgroundImage: NetworkImage(state.currentUser.avatarUrl),
+                    imageUrl: state.currentUser.avatarUrl,
+                    name: state.currentUser.name,
                   ),
                   const SizedBox(width: 12),
                   Expanded(

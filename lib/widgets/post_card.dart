@@ -3,6 +3,7 @@ import '../models/post_model.dart';
 import '../theme/app_theme.dart';
 import '../controllers/app_state_provider.dart';
 import '../routes/app_routes.dart';
+import 'avatar/app_avatar.dart';
 
 /// WIDGET REUTILIZÁVEL: Cartão de postagem
 /// Componente central do Feed do Papacapim.
@@ -41,10 +42,10 @@ class PostCard extends StatelessWidget {
                       arguments: targetUser,
                     );
                   },
-                  child: CircleAvatar(
+                  child: AppAvatar(
+                    imageUrl: post.authorAvatarUrl,
                     radius: 20,
-                    backgroundColor: AppTheme.primaryLight,
-                    backgroundImage: NetworkImage(post.authorAvatarUrl),
+                    name: post.authorName,
                   ),
                 ),
                 const SizedBox(width: 10),

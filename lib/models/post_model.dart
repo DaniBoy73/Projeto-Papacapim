@@ -39,10 +39,11 @@ class PostModel {
     final userMap = json['user'] is Map<String, dynamic> ? json['user'] as Map<String, dynamic> : null;
     final authorLogin = (userMap?['login'] ?? json['authorLogin'] ?? '').toString();
     final authorName = (userMap?['name'] ?? json['authorName'] ?? authorLogin).toString();
+    final cleanAuthor = authorName.trim().isNotEmpty ? authorName.trim() : authorLogin.trim();
     final rawProfileImage = userMap?['profile_image'] ?? json['authorAvatarUrl'];
     final authorAvatar = (rawProfileImage != null && rawProfileImage.toString().isNotEmpty)
         ? rawProfileImage.toString()
-        : 'https://i.pravatar.cc/150?u=$authorLogin';
+        : 'https://ui-avatars.com/api/?name=${Uri.encodeComponent(cleanAuthor)}&background=10B981&color=fff&size=150&bold=true';
 
     DateTime parsedDate;
     if (json['created_at'] != null) {

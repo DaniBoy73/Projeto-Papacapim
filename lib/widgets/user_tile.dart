@@ -3,6 +3,7 @@ import '../models/user_model.dart';
 import '../theme/app_theme.dart';
 import '../controllers/app_state_provider.dart';
 import '../routes/app_routes.dart';
+import 'avatar/app_avatar.dart';
 
 /// ============================================================================
 /// WIDGET REUTILIZÁVEL: USER TILE
@@ -20,8 +21,9 @@ class UserTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final state = AppStateProvider.of(context);
-    final displayUser = state.getUserById(user.id);
-    final isMe = displayUser.id == state.currentUser.id;
+    final displayUser = state.getUserByLogin(user.login, fallback: user);
+    final isMe = displayUser.login.toLowerCase() == state.currentUser.login.toLowerCase() ||
+        displayUser.id.toLowerCase() == state.currentUser.id.toLowerCase();
 
     return Card(
       child: InkWell(
@@ -38,10 +40,10 @@ class UserTile extends StatelessWidget {
           child: Row(
             children: [
               // Avatar do Usuário
-              CircleAvatar(
+              AppAvatar(
+                imageUrl: displayUser.avatarUrl,
                 radius: 24,
-                backgroundColor: AppTheme.primaryLight,
-                backgroundImage: NetworkImage(displayUser.avatarUrl),
+                name: displayUser.name,
               ),
               const SizedBox(width: 12),
 
