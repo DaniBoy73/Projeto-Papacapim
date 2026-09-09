@@ -276,7 +276,20 @@ class ApiService {
     );
 
     final data = _handleResponse(response) as Map<String, dynamic>;
-    return UserModel.fromJson(data, isCurrentUser: true);
+    var user = UserModel.fromJson(data, isCurrentUser: true);
+
+    // Se uma nova imagem foi enviada, busca os dados atualizados via GET /users/me
+    // para obter a URL oficial webp gerada pela API
+    if (imageData != null && imageData.isNotEmpty) {
+      try {
+        final fresh = await getMyProfile();
+        if (fresh.avatarUrl.isNotEmpty) {
+          user = fresh;
+        }
+      } catch (_) {}
+    }
+
+    return user;
   }
 
   /// Exclui permanentemente a conta do usuário logado: DELETE /users/me

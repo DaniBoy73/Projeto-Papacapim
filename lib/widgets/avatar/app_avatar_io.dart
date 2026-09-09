@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 
 /// Implementação para plataformas não-web (Mobile, Desktop, Testes de Widget)
@@ -12,10 +13,25 @@ Widget buildPlatformAvatar({
 }) {
   final hasImage = imageUrl.isNotEmpty;
 
+  ImageProvider? imageProvider;
+  if (hasImage) {
+    if (imageUrl.startsWith('data:image')) {
+      try {
+        final commaIdx = imageUrl.indexOf(',');
+        final b64 = commaIdx != -1 ? imageUrl.substring(commaIdx + 1) : imageUrl;
+        imageProvider = MemoryImage(base64Decode(b64));
+      } catch (_) {
+        imageProvider = null;
+      }
+    } else {
+      imageProvider = NetworkImage(imageUrl);
+    }
+  }
+
   Widget avatar = CircleAvatar(
     radius: size / 2,
     backgroundColor: backgroundColor,
-    backgroundImage: hasImage ? NetworkImage(imageUrl) : null,
+    backgroundImage: imageProvider,
     onBackgroundImageError: hasImage ? (_, _) {} : null,
     child: hasImage
         ? null

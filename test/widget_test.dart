@@ -10,6 +10,7 @@ import 'package:projeto_papacapim/models/post_model.dart';
 import 'package:projeto_papacapim/screens/profile_screen.dart';
 import 'package:projeto_papacapim/widgets/user_tile.dart';
 import 'package:projeto_papacapim/widgets/avatar/app_avatar.dart';
+import 'package:projeto_papacapim/widgets/photo_source_bottom_sheet.dart';
 
 class MockHttpOverrides extends HttpOverrides {
   @override
@@ -271,5 +272,35 @@ void main() {
       ),
     );
     expect(find.text('C'), findsNothing);
+  });
+
+  testWidgets('PhotoSourceBottomSheet displays real gallery and file options', (WidgetTester tester) async {
+    final appState = AppState();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AppStateProvider(
+          state: appState,
+          child: const Scaffold(
+            body: PhotoSourceBottomSheet(),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Alterar Foto do Perfil'), findsOneWidget);
+    expect(find.text('Escolher da Galeria / Arquivos'), findsOneWidget);
+    expect(find.text('Tirar foto com a Câmera'), findsOneWidget);
+    expect(find.text('Galeria Simulada (Mock Parte 1)'), findsNothing);
+    expect(find.text('Câmera Simulada (Mock Parte 1)'), findsNothing);
+  });
+
+  test('AppState.updateAvatar updates current user avatar and post author avatars', () async {
+    final appState = AppState();
+    final newAvatar = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150';
+
+    final success = await appState.updateAvatar(newAvatar);
+    expect(success, isTrue);
+    expect(appState.currentUser.avatarUrl, newAvatar);
   });
 }
