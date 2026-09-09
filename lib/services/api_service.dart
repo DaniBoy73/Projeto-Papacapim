@@ -44,6 +44,8 @@ class ApiService {
     final headers = <String, String>{
       'Content-Type': 'application/json; charset=utf-8',
       'Accept': 'application/json',
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
     };
     if (_sessionToken != null && _sessionToken!.isNotEmpty) {
       headers['x-session-token'] = _sessionToken!;
@@ -408,6 +410,11 @@ class ApiService {
     );
 
     final data = _handleResponse(response) as Map<String, dynamic>;
+    if (data['user'] == null && _currentUserLogin != null) {
+      data['user'] = {
+        'login': _currentUserLogin,
+      };
+    }
     return PostModel.fromJson(data);
   }
 
@@ -424,6 +431,11 @@ class ApiService {
     );
 
     final data = _handleResponse(response) as Map<String, dynamic>;
+    if (data['user'] == null && _currentUserLogin != null) {
+      data['user'] = {
+        'login': _currentUserLogin,
+      };
+    }
     return PostModel.fromJson(data);
   }
 

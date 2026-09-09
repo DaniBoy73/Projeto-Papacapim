@@ -64,15 +64,44 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     final state = AppStateProvider.of(context);
 
-    // Se nenhum usuário for passado, exibe o perfil do usuário atualmente logado
-    final initialUser = widget.targetUser ?? state.currentUser;
-    final user = state.getUserByLogin(initialUser.login, fallback: initialUser);
+    // Se nenhum usuário for passado ou for o próprio usuário, sincroniza diretamente com state.currentUser
+    final isTargetMe = widget.targetUser == null ||
+        widget.targetUser!.login.toLowerCase() == state.currentUser.login.toLowerCase() ||
+        widget.targetUser!.id.toLowerCase() == state.currentUser.id.toLowerCase();
+    final initialUser = isTargetMe ? state.currentUser : widget.targetUser!;
+    final user = isTargetMe
+        ? state.currentUser
+        : state.getUserByLogin(initialUser.login, fallback: initialUser);
     final isMe = user.login.toLowerCase() == state.currentUser.login.toLowerCase() ||
         user.id.toLowerCase() == state.currentUser.id.toLowerCase();
 
-    // Postagens do usuário (da API ou filtradas do cache local)
-    final postsToDisplay = _userPosts ??
-        state.posts.where((p) => p.authorLogin.toLowerCase() == user.login.toLowerCase()).toList();
+    // Postagens do usuário com sincronização reativa em tempo real
+    List<PostModel> postsToDisplay;
+    if (isMe) {
+      // Combina os posts do estado global com os posts carregados da API
+      final myStatePosts = state.posts
+          .where((p) => p.authorLogin.toLowerCase() == user.login.toLowerCase())
+          .toList();
+      final combined = <PostModel>[...myStatePosts];
+      if (_userPosts != null) {
+        for (final p in _userPosts!) {
+          if (!combined.any((item) => item.id == p.id)) {
+            combined.add(p);
+          }
+        }
+      }
+      // Garante que o nome e avatar do autor estejam atualizados com o perfil mais recente
+      postsToDisplay = combined.map((p) {
+        return p.copyWith(
+          authorName: user.name,
+          authorAvatarUrl: user.avatarUrl.isNotEmpty ? user.avatarUrl : p.authorAvatarUrl,
+        );
+      }).toList();
+      postsToDisplay.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    } else {
+      postsToDisplay = _userPosts ??
+          state.posts.where((p) => p.authorLogin.toLowerCase() == user.login.toLowerCase()).toList();
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -82,8 +111,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
             IconButton(
               icon: const Icon(Icons.settings_outlined),
               tooltip: 'Alterar Dados',
-              onPressed: () {
-                Navigator.pushNamed(context, AppRoutes.editProfile);
+              onPressed: () async {
+                await Navigator.pushNamed(context, AppRoutes.editProfile);
+                if (mounted) {
+                  _loadProfileData(user.login, state);
+                }
               },
             ),
         ],

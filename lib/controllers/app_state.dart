@@ -31,7 +31,20 @@ class AppState extends ChangeNotifier {
   UserModel get currentUser => _currentUser;
   List<UserModel> get users => List.unmodifiable(_users);
   List<PostModel> get posts => List.unmodifiable(_allPosts);
-  List<PostModel> get followedUsersPosts => List.unmodifiable(_followedPosts);
+  List<PostModel> get followedUsersPosts {
+    // Retorna posts seguidos combinados com os posts do próprio usuário logado, ordenados por data
+    final myPosts = _allPosts.where(
+      (p) => p.authorLogin.toLowerCase() == _currentUser.login.toLowerCase(),
+    );
+    final allFollowed = <PostModel>[..._followedPosts];
+    for (final post in myPosts) {
+      if (!allFollowed.any((p) => p.id == post.id)) {
+        allFollowed.add(post);
+      }
+    }
+    allFollowed.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return List.unmodifiable(allFollowed);
+  }
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   bool get isAuthenticated => api.isAuthenticated;
@@ -259,6 +272,28 @@ class AppState extends ChangeNotifier {
       if (apiUsers.isNotEmpty) {
         _users = apiUsers;
       }
+
+      // Garante que o nome e avatar do autor estejam atualizados com o perfil mais recente
+      _allPosts = _allPosts.map((p) {
+        if (p.authorLogin.toLowerCase() == _currentUser.login.toLowerCase()) {
+          return p.copyWith(
+            authorName: _currentUser.name,
+            authorAvatarUrl: _currentUser.avatarUrl.isNotEmpty ? _currentUser.avatarUrl : p.authorAvatarUrl,
+          );
+        }
+        return p;
+      }).toList();
+
+      _followedPosts = _followedPosts.map((p) {
+        if (p.authorLogin.toLowerCase() == _currentUser.login.toLowerCase()) {
+          return p.copyWith(
+            authorName: _currentUser.name,
+            authorAvatarUrl: _currentUser.avatarUrl.isNotEmpty ? _currentUser.avatarUrl : p.authorAvatarUrl,
+          );
+        }
+        return p;
+      }).toList();
+
       notifyListeners();
     } catch (e) {
       _errorMessage = e.toString();
@@ -279,16 +314,36 @@ class AppState extends ChangeNotifier {
 
     try {
       if (api.isAuthenticated) {
+        final PostModel created;
         if (replyToPost != null) {
           final parentId = int.tryParse(replyToPost.id);
           if (parentId != null) {
-            await api.replyPost(parentId, content.trim());
+            created = await api.replyPost(parentId, content.trim());
           } else {
-            await api.createPost(content.trim());
+            created = await api.createPost(content.trim());
           }
         } else {
-          await api.createPost(content.trim());
+          created = await api.createPost(content.trim());
         }
+
+        // Insere imediatamente a postagem criada no topo de _allPosts
+        // garantindo reatividade instantânea no Web/Mobile
+        final fullCreated = created.copyWith(
+            authorId: _currentUser.id,
+            authorName: _currentUser.name,
+            authorLogin: _currentUser.login,
+            authorAvatarUrl: _currentUser.avatarUrl,
+            parentPostId: replyToPost?.id,
+            parentAuthorLogin: replyToPost?.authorLogin,
+            parentContentPreview: replyToPost != null
+                ? (replyToPost.content.length > 40
+                    ? '${replyToPost.content.substring(0, 40)}...'
+                    : replyToPost.content)
+                : null,
+          );
+          _postAuthorCache[fullCreated.id] = fullCreated.authorLogin;
+          _allPosts.removeWhere((p) => p.id == fullCreated.id);
+          _allPosts.insert(0, fullCreated);
 
         // Atualiza os feeds após a criação no back-end
         await refreshFeed();
@@ -495,26 +550,42 @@ class AppState extends ChangeNotifier {
             ? updatedUser.avatarUrl
             : (avatarUrl ?? _currentUser.avatarUrl);
 
+        final newName = updatedUser.name.isNotEmpty ? updatedUser.name : name.trim();
+
         _currentUser = updatedUser.copyWith(
+          name: newName,
           isCurrentUser: true,
           avatarUrl: effectiveAvatar,
         );
 
-        // Atualiza também o avatar no cache de usuários locais
+        // Atualiza também o usuário no cache de usuários locais
         final userIndex = _users.indexWhere((u) => u.login.toLowerCase() == _currentUser.login.toLowerCase());
         if (userIndex != -1) {
           _users[userIndex] = _currentUser;
+        } else {
+          _users.add(_currentUser);
         }
 
-        // Atualiza o avatar nas postagens do autor atual no feed
-        if (effectiveAvatar.isNotEmpty) {
-          _allPosts = _allPosts.map((p) {
-            if (p.authorLogin.toLowerCase() == _currentUser.login.toLowerCase()) {
-              return p.copyWith(authorAvatarUrl: effectiveAvatar);
-            }
-            return p;
-          }).toList();
-        }
+        // Atualiza o nome e o avatar nas postagens do autor atual no feed
+        _allPosts = _allPosts.map((p) {
+          if (p.authorLogin.toLowerCase() == _currentUser.login.toLowerCase()) {
+            return p.copyWith(
+              authorName: newName,
+              authorAvatarUrl: effectiveAvatar.isNotEmpty ? effectiveAvatar : p.authorAvatarUrl,
+            );
+          }
+          return p;
+        }).toList();
+
+        _followedPosts = _followedPosts.map((p) {
+          if (p.authorLogin.toLowerCase() == _currentUser.login.toLowerCase()) {
+            return p.copyWith(
+              authorName: newName,
+              authorAvatarUrl: effectiveAvatar.isNotEmpty ? effectiveAvatar : p.authorAvatarUrl,
+            );
+          }
+          return p;
+        }).toList();
 
         // Se a senha foi alterada, a API encerra as sessões existentes; refazemos o login
         if (password != null && password.isNotEmpty) {
@@ -534,6 +605,26 @@ class AppState extends ChangeNotifier {
         if (userIndex != -1) {
           _users[userIndex] = _currentUser;
         }
+
+        _allPosts = _allPosts.map((p) {
+          if (p.authorLogin.toLowerCase() == _currentUser.login.toLowerCase()) {
+            return p.copyWith(
+              authorName: name.trim(),
+              authorAvatarUrl: offlineAvatar,
+            );
+          }
+          return p;
+        }).toList();
+
+        _followedPosts = _followedPosts.map((p) {
+          if (p.authorLogin.toLowerCase() == _currentUser.login.toLowerCase()) {
+            return p.copyWith(
+              authorName: name.trim(),
+              authorAvatarUrl: offlineAvatar,
+            );
+          }
+          return p;
+        }).toList();
       }
 
       _isLoading = false;
