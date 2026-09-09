@@ -40,7 +40,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     final List<Widget> screens = [
       const FeedScreen(),
       const SearchScreen(),
-      ProfileScreen(targetUser: state.currentUser),
+      const ProfileScreen(),
     ];
 
     return Scaffold(
@@ -91,8 +91,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
       // Botão Flutuante Rápido para Criar Postagem
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.pushNamed(context, AppRoutes.createPost);
+        onPressed: () async {
+          await Navigator.pushNamed(context, AppRoutes.createPost);
+          if (context.mounted) {
+            await state.refreshFeed();
+          }
         },
         backgroundColor: AppTheme.primaryColor,
         foregroundColor: Colors.white,

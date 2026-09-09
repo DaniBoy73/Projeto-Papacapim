@@ -11,6 +11,7 @@ import 'package:projeto_papacapim/screens/profile_screen.dart';
 import 'package:projeto_papacapim/widgets/user_tile.dart';
 import 'package:projeto_papacapim/widgets/avatar/app_avatar.dart';
 import 'package:projeto_papacapim/widgets/photo_source_bottom_sheet.dart';
+import 'package:projeto_papacapim/widgets/post_card.dart';
 
 class MockHttpOverrides extends HttpOverrides {
   @override
@@ -303,4 +304,94 @@ void main() {
     expect(success, isTrue);
     expect(appState.currentUser.avatarUrl, newAvatar);
   });
+
+  testWidgets('PostCard renders real parent author arroba and never @usuario for replies', (WidgetTester tester) async {
+    final appState = AppState();
+    final replyPost = PostModel(
+      id: '2539',
+      authorId: 'testing',
+      authorName: 'Testing User',
+      authorLogin: 'testing',
+      authorAvatarUrl: '',
+      content: 'Mensagem de resposta de teste',
+      createdAt: DateTime.now(),
+      likesCount: 1,
+      commentsCount: 0,
+      parentPostId: '2480',
+      parentAuthorLogin: 'daniboy',
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AppStateProvider(
+          state: appState,
+          child: Scaffold(
+            body: PostCard(post: replyPost),
+          ),
+        ),
+      ),
+    );
+
+    // Deve exibir o @handle real do autor do post pai
+    expect(find.text('Respondendo a @daniboy'), findsOneWidget);
+    expect(find.textContaining('@usuario'), findsNothing);
+  });
+
+  test('AppState.updateProfile updates authorName on posts immediately', () async {
+    final appState = AppState();
+    expect(appState.currentUser.name, isNot('Nome Atualizado Web'));
+
+    final ok = await appState.updateProfile(name: 'Nome Atualizado Web');
+    expect(ok, isTrue);
+    expect(appState.currentUser.name, 'Nome Atualizado Web');
+
+    // Verifica se os posts do autor logado tiveram seu autor atualizado
+    final myPosts = appState.posts.where((p) => p.authorLogin == appState.currentUser.login).toList();
+    for (final p in myPosts) {
+      expect(p.authorName, 'Nome Atualizado Web');
+    }
+  });
+
+  test('AppState.addPost includes newly created post in followedUsersPosts immediately', () async {
+    final appState = AppState();
+    final initialCount = appState.followedUsersPosts.length;
+
+    final created = await appState.addPost('Post de teste para feed instantâneo');
+    expect(created, isTrue);
+
+    // Deve aparecer imediatamente na aba Seguindo (followedUsersPosts)
+    expect(appState.followedUsersPosts.length, initialCount + 1);
+    expect(appState.followedUsersPosts.first.content, 'Post de teste para feed instantâneo');
+  });
+
+  testWidgets('ProfileScreen reflects new name and newly created post reactively', (WidgetTester tester) async {
+    final appState = AppState();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AppStateProvider(
+          state: appState,
+          child: const ProfileScreen(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Post de teste reativo'), findsNothing);
+
+    // Cria um novo post no estado
+    await appState.addPost('Post de teste reativo');
+    await tester.pumpAndSettle();
+
+    // Deve renderizar o novo post imediatamente sem recarregar a tela
+    expect(find.text('Post de teste reativo'), findsOneWidget);
+
+    // Altera o nome do usuário no estado
+    await appState.updateProfile(name: 'Novo Nome Reativo');
+    await tester.pumpAndSettle();
+
+    // O cabeçalho deve exibir o novo nome imediatamente
+    expect(find.text('Novo Nome Reativo'), findsWidgets);
+  });
 }
+

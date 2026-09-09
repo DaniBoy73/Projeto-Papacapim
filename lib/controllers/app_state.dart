@@ -15,6 +15,8 @@ class AppState extends ChangeNotifier {
   List<UserModel> _users = [];
   List<PostModel> _allPosts = [];
   List<PostModel> _followedPosts = [];
+  final Map<String, String> _postAuthorCache = {};
+  final Set<String> _pendingParentFetches = {};
   bool _isLoading = false;
   String? _errorMessage;
 
@@ -29,7 +31,20 @@ class AppState extends ChangeNotifier {
   UserModel get currentUser => _currentUser;
   List<UserModel> get users => List.unmodifiable(_users);
   List<PostModel> get posts => List.unmodifiable(_allPosts);
-  List<PostModel> get followedUsersPosts => List.unmodifiable(_followedPosts);
+  List<PostModel> get followedUsersPosts {
+    // Retorna posts seguidos combinados com os posts do próprio usuário logado, ordenados por data
+    final myPosts = _allPosts.where(
+      (p) => p.authorLogin.toLowerCase() == _currentUser.login.toLowerCase(),
+    );
+    final allFollowed = <PostModel>[..._followedPosts];
+    for (final post in myPosts) {
+      if (!allFollowed.any((p) => p.id == post.id)) {
+        allFollowed.add(post);
+      }
+    }
+    allFollowed.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return List.unmodifiable(allFollowed);
+  }
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   bool get isAuthenticated => api.isAuthenticated;
@@ -40,6 +55,87 @@ class AppState extends ChangeNotifier {
     _users = [];
     _allPosts = MockDatabase.getInitialPosts();
     _followedPosts = _allPosts.where((p) => p.authorLogin != _currentUser.login).toList();
+    _postAuthorCache.clear();
+    _pendingParentFetches.clear();
+  }
+
+  /// Registra no cache interno os mapeamentos de postId -> authorLogin
+  void _registerPostAuthors(Iterable<PostModel> posts) {
+    for (final p in posts) {
+      if (p.id.isNotEmpty && p.authorLogin.isNotEmpty) {
+        _postAuthorCache[p.id] = p.authorLogin;
+      }
+      if (p.parentPostId != null &&
+          p.parentAuthorLogin != null &&
+          p.parentAuthorLogin!.isNotEmpty) {
+        _postAuthorCache[p.parentPostId!] = p.parentAuthorLogin!;
+      }
+    }
+  }
+
+  /// Resolve o arroba (@login) do autor do post pai para respostas
+  List<PostModel> _resolveParentAuthors(List<PostModel> posts) {
+    return posts.map((post) {
+      if (post.parentPostId == null || post.parentPostId!.isEmpty) {
+        return post;
+      }
+      if (post.parentAuthorLogin != null && post.parentAuthorLogin!.isNotEmpty) {
+        _postAuthorCache[post.parentPostId!] = post.parentAuthorLogin!;
+        return post;
+      }
+      final cachedAuthor = _postAuthorCache[post.parentPostId];
+      if (cachedAuthor != null && cachedAuthor.isNotEmpty) {
+        return post.copyWith(parentAuthorLogin: cachedAuthor);
+      }
+      // Se ainda não estiver em cache, agenda a busca via API em segundo plano
+      _fetchParentAuthorAsync(post.parentPostId!);
+      return post;
+    }).toList();
+  }
+
+  /// Busca em segundo plano o autor do post original através de GET /posts/{id}
+  void _fetchParentAuthorAsync(String parentPostId) {
+    if (_postAuthorCache.containsKey(parentPostId) || _pendingParentFetches.contains(parentPostId)) {
+      return;
+    }
+    if (!api.isAuthenticated) return;
+
+    _pendingParentFetches.add(parentPostId);
+    api.getPostById(parentPostId).then((parentPost) {
+      _pendingParentFetches.remove(parentPostId);
+      if (parentPost.authorLogin.isNotEmpty) {
+        _postAuthorCache[parentPostId] = parentPost.authorLogin;
+        _allPosts = _allPosts.map((p) {
+          if (p.parentPostId == parentPostId &&
+              (p.parentAuthorLogin == null || p.parentAuthorLogin!.isEmpty)) {
+            return p.copyWith(parentAuthorLogin: parentPost.authorLogin);
+          }
+          return p;
+        }).toList();
+
+        _followedPosts = _followedPosts.map((p) {
+          if (p.parentPostId == parentPostId &&
+              (p.parentAuthorLogin == null || p.parentAuthorLogin!.isEmpty)) {
+            return p.copyWith(parentAuthorLogin: parentPost.authorLogin);
+          }
+          return p;
+        }).toList();
+
+        notifyListeners();
+      }
+    }).catchError((_) {
+      _pendingParentFetches.remove(parentPostId);
+    });
+  }
+
+  /// Retorna o @login do autor do post que está sendo respondido (ou null se ainda carregando)
+  String? getParentAuthorLogin(String? parentPostId) {
+    if (parentPostId == null || parentPostId.isEmpty) return null;
+    if (_postAuthorCache.containsKey(parentPostId)) {
+      return _postAuthorCache[parentPostId];
+    }
+    _fetchParentAuthorAsync(parentPostId);
+    return null;
   }
 
   // ==========================================================================
@@ -166,11 +262,38 @@ class AppState extends ChangeNotifier {
 
       _followedPosts = results[0] as List<PostModel>;
       _allPosts = results[1] as List<PostModel>;
+      _registerPostAuthors(_allPosts);
+      _registerPostAuthors(_followedPosts);
+      _allPosts = _resolveParentAuthors(_allPosts);
+      _followedPosts = _resolveParentAuthors(_followedPosts);
+
       _currentUser = (results[2] as UserModel).copyWith(isCurrentUser: true);
       final apiUsers = results[3] as List<UserModel>;
       if (apiUsers.isNotEmpty) {
         _users = apiUsers;
       }
+
+      // Garante que o nome e avatar do autor estejam atualizados com o perfil mais recente
+      _allPosts = _allPosts.map((p) {
+        if (p.authorLogin.toLowerCase() == _currentUser.login.toLowerCase()) {
+          return p.copyWith(
+            authorName: _currentUser.name,
+            authorAvatarUrl: _currentUser.avatarUrl.isNotEmpty ? _currentUser.avatarUrl : p.authorAvatarUrl,
+          );
+        }
+        return p;
+      }).toList();
+
+      _followedPosts = _followedPosts.map((p) {
+        if (p.authorLogin.toLowerCase() == _currentUser.login.toLowerCase()) {
+          return p.copyWith(
+            authorName: _currentUser.name,
+            authorAvatarUrl: _currentUser.avatarUrl.isNotEmpty ? _currentUser.avatarUrl : p.authorAvatarUrl,
+          );
+        }
+        return p;
+      }).toList();
+
       notifyListeners();
     } catch (e) {
       _errorMessage = e.toString();
@@ -182,21 +305,45 @@ class AppState extends ChangeNotifier {
   Future<bool> addPost(String content, {PostModel? replyToPost}) async {
     if (content.trim().isEmpty) return false;
 
+    if (replyToPost != null && replyToPost.authorLogin.isNotEmpty) {
+      _postAuthorCache[replyToPost.id] = replyToPost.authorLogin;
+    }
+
     _isLoading = true;
     notifyListeners();
 
     try {
       if (api.isAuthenticated) {
+        final PostModel created;
         if (replyToPost != null) {
           final parentId = int.tryParse(replyToPost.id);
           if (parentId != null) {
-            await api.replyPost(parentId, content.trim());
+            created = await api.replyPost(parentId, content.trim());
           } else {
-            await api.createPost(content.trim());
+            created = await api.createPost(content.trim());
           }
         } else {
-          await api.createPost(content.trim());
+          created = await api.createPost(content.trim());
         }
+
+        // Insere imediatamente a postagem criada no topo de _allPosts
+        // garantindo reatividade instantânea no Web/Mobile
+        final fullCreated = created.copyWith(
+            authorId: _currentUser.id,
+            authorName: _currentUser.name,
+            authorLogin: _currentUser.login,
+            authorAvatarUrl: _currentUser.avatarUrl,
+            parentPostId: replyToPost?.id,
+            parentAuthorLogin: replyToPost?.authorLogin,
+            parentContentPreview: replyToPost != null
+                ? (replyToPost.content.length > 40
+                    ? '${replyToPost.content.substring(0, 40)}...'
+                    : replyToPost.content)
+                : null,
+          );
+          _postAuthorCache[fullCreated.id] = fullCreated.authorLogin;
+          _allPosts.removeWhere((p) => p.id == fullCreated.id);
+          _allPosts.insert(0, fullCreated);
 
         // Atualiza os feeds após a criação no back-end
         await refreshFeed();
@@ -230,6 +377,7 @@ class AppState extends ChangeNotifier {
             );
           }
         }
+        _postAuthorCache[newPost.id] = newPost.authorLogin;
         _allPosts.insert(0, newPost);
         notifyListeners();
       }
@@ -402,26 +550,42 @@ class AppState extends ChangeNotifier {
             ? updatedUser.avatarUrl
             : (avatarUrl ?? _currentUser.avatarUrl);
 
+        final newName = updatedUser.name.isNotEmpty ? updatedUser.name : name.trim();
+
         _currentUser = updatedUser.copyWith(
+          name: newName,
           isCurrentUser: true,
           avatarUrl: effectiveAvatar,
         );
 
-        // Atualiza também o avatar no cache de usuários locais
+        // Atualiza também o usuário no cache de usuários locais
         final userIndex = _users.indexWhere((u) => u.login.toLowerCase() == _currentUser.login.toLowerCase());
         if (userIndex != -1) {
           _users[userIndex] = _currentUser;
+        } else {
+          _users.add(_currentUser);
         }
 
-        // Atualiza o avatar nas postagens do autor atual no feed
-        if (effectiveAvatar.isNotEmpty) {
-          _allPosts = _allPosts.map((p) {
-            if (p.authorLogin.toLowerCase() == _currentUser.login.toLowerCase()) {
-              return p.copyWith(authorAvatarUrl: effectiveAvatar);
-            }
-            return p;
-          }).toList();
-        }
+        // Atualiza o nome e o avatar nas postagens do autor atual no feed
+        _allPosts = _allPosts.map((p) {
+          if (p.authorLogin.toLowerCase() == _currentUser.login.toLowerCase()) {
+            return p.copyWith(
+              authorName: newName,
+              authorAvatarUrl: effectiveAvatar.isNotEmpty ? effectiveAvatar : p.authorAvatarUrl,
+            );
+          }
+          return p;
+        }).toList();
+
+        _followedPosts = _followedPosts.map((p) {
+          if (p.authorLogin.toLowerCase() == _currentUser.login.toLowerCase()) {
+            return p.copyWith(
+              authorName: newName,
+              authorAvatarUrl: effectiveAvatar.isNotEmpty ? effectiveAvatar : p.authorAvatarUrl,
+            );
+          }
+          return p;
+        }).toList();
 
         // Se a senha foi alterada, a API encerra as sessões existentes; refazemos o login
         if (password != null && password.isNotEmpty) {
@@ -441,6 +605,26 @@ class AppState extends ChangeNotifier {
         if (userIndex != -1) {
           _users[userIndex] = _currentUser;
         }
+
+        _allPosts = _allPosts.map((p) {
+          if (p.authorLogin.toLowerCase() == _currentUser.login.toLowerCase()) {
+            return p.copyWith(
+              authorName: name.trim(),
+              authorAvatarUrl: offlineAvatar,
+            );
+          }
+          return p;
+        }).toList();
+
+        _followedPosts = _followedPosts.map((p) {
+          if (p.authorLogin.toLowerCase() == _currentUser.login.toLowerCase()) {
+            return p.copyWith(
+              authorName: name.trim(),
+              authorAvatarUrl: offlineAvatar,
+            );
+          }
+          return p;
+        }).toList();
       }
 
       _isLoading = false;
@@ -494,7 +678,9 @@ class AppState extends ChangeNotifier {
 
     if (api.isAuthenticated) {
       try {
-        return await api.getPosts(search: query.trim());
+        final apiResults = await api.getPosts(search: query.trim());
+        _registerPostAuthors(apiResults);
+        return _resolveParentAuthors(apiResults);
       } catch (_) {}
     }
 
@@ -570,7 +756,9 @@ class AppState extends ChangeNotifier {
   Future<List<PostModel>> fetchUserPosts(String login) async {
     if (api.isAuthenticated) {
       try {
-        return await api.getUserPosts(login);
+        final userPosts = await api.getUserPosts(login);
+        _registerPostAuthors(userPosts);
+        return _resolveParentAuthors(userPosts);
       } catch (_) {}
     }
     return _allPosts.where((p) => p.authorLogin.toLowerCase() == login.toLowerCase()).toList();

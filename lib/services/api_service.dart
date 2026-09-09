@@ -44,6 +44,8 @@ class ApiService {
     final headers = <String, String>{
       'Content-Type': 'application/json; charset=utf-8',
       'Accept': 'application/json',
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
     };
     if (_sessionToken != null && _sessionToken!.isNotEmpty) {
       headers['x-session-token'] = _sessionToken!;
@@ -386,6 +388,15 @@ class ApiService {
     return data.map((item) => PostModel.fromJson(item as Map<String, dynamic>)).toList();
   }
 
+  /// Obter uma postagem específica por ID: GET /posts/{id}
+  Future<PostModel> getPostById(String postId) async {
+    final cleanId = postId.trim();
+    final url = Uri.parse('$baseUrl/posts/$cleanId');
+    final response = await _client.get(url, headers: _getHeaders());
+    final data = _handleResponse(response) as Map<String, dynamic>;
+    return PostModel.fromJson(data);
+  }
+
   /// Criar uma nova postagem no feed: POST /posts
   Future<PostModel> createPost(String message) async {
     final url = Uri.parse('$baseUrl/posts');
@@ -399,6 +410,11 @@ class ApiService {
     );
 
     final data = _handleResponse(response) as Map<String, dynamic>;
+    if (data['user'] == null && _currentUserLogin != null) {
+      data['user'] = {
+        'login': _currentUserLogin,
+      };
+    }
     return PostModel.fromJson(data);
   }
 
@@ -415,6 +431,11 @@ class ApiService {
     );
 
     final data = _handleResponse(response) as Map<String, dynamic>;
+    if (data['user'] == null && _currentUserLogin != null) {
+      data['user'] = {
+        'login': _currentUserLogin,
+      };
+    }
     return PostModel.fromJson(data);
   }
 

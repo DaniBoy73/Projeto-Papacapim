@@ -104,8 +104,8 @@ class ProfileHeader extends StatelessWidget {
             width: 200,
             child: isMe
                 ? OutlinedButton.icon(
-                    onPressed: () {
-                      Navigator.pushNamed(context, AppRoutes.editProfile);
+                    onPressed: () async {
+                      await Navigator.pushNamed(context, AppRoutes.editProfile);
                     },
                     icon: const Icon(Icons.edit_outlined, size: 18),
                     label: const Text('Editar Perfil'),
