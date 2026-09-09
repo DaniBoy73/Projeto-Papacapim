@@ -9,6 +9,7 @@ class SearchBarWidget extends StatelessWidget {
   final TextEditingController controller;
   final String hintText;
   final ValueChanged<String> onChanged;
+  final ValueChanged<String>? onSubmitted;
   final VoidCallback? onClear;
 
   const SearchBarWidget({
@@ -16,6 +17,7 @@ class SearchBarWidget extends StatelessWidget {
     required this.controller,
     this.hintText = 'Buscar no Papacapim...',
     required this.onChanged,
+    this.onSubmitted,
     this.onClear,
   });
 
@@ -36,6 +38,8 @@ class SearchBarWidget extends StatelessWidget {
       child: TextField(
         controller: controller,
         onChanged: onChanged,
+        onSubmitted: onSubmitted,
+        textInputAction: TextInputAction.search,
         decoration: InputDecoration(
           hintText: hintText,
           prefixIcon: const Icon(Icons.search, color: AppTheme.textMutedColor),

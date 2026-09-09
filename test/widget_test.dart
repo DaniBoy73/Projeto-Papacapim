@@ -8,6 +8,7 @@ import 'package:projeto_papacapim/controllers/app_state_provider.dart';
 import 'package:projeto_papacapim/models/user_model.dart';
 import 'package:projeto_papacapim/models/post_model.dart';
 import 'package:projeto_papacapim/screens/profile_screen.dart';
+import 'package:projeto_papacapim/screens/search_screen.dart';
 import 'package:projeto_papacapim/widgets/user_tile.dart';
 import 'package:projeto_papacapim/widgets/avatar/app_avatar.dart';
 import 'package:projeto_papacapim/widgets/photo_source_bottom_sheet.dart';
@@ -393,5 +394,44 @@ void main() {
     // O cabeçalho deve exibir o novo nome imediatamente
     expect(find.text('Novo Nome Reativo'), findsWidgets);
   });
+
+  testWidgets('SearchScreen handles fast typing with debouncing without losing query results', (WidgetTester tester) async {
+    final appState = AppState();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AppStateProvider(
+          state: appState,
+          child: const SearchScreen(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Simula digitação rápida de múltiplos caracteres em sequência
+    final searchField = find.byType(TextField);
+    expect(searchField, findsOneWidget);
+
+    await tester.enterText(searchField, 'c');
+    await tester.pump(const Duration(milliseconds: 50));
+
+    await tester.enterText(searchField, 'ca');
+    await tester.pump(const Duration(milliseconds: 50));
+
+    await tester.enterText(searchField, 'car');
+    await tester.pump(const Duration(milliseconds: 50));
+
+    await tester.enterText(searchField, 'carlos');
+    // Ainda dentro do tempo de debounce (300ms)
+    await tester.pump(const Duration(milliseconds: 100));
+
+    // Aguarda o término do debounce e requisições
+    await tester.pump(const Duration(milliseconds: 350));
+    await tester.pumpAndSettle();
+
+    // Verifica se a tela processou a busca final por "carlos"
+    expect(find.text('carlos'), findsOneWidget);
+  });
 }
+
 
