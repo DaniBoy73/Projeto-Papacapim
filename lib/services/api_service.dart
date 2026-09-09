@@ -386,6 +386,15 @@ class ApiService {
     return data.map((item) => PostModel.fromJson(item as Map<String, dynamic>)).toList();
   }
 
+  /// Obter uma postagem específica por ID: GET /posts/{id}
+  Future<PostModel> getPostById(String postId) async {
+    final cleanId = postId.trim();
+    final url = Uri.parse('$baseUrl/posts/$cleanId');
+    final response = await _client.get(url, headers: _getHeaders());
+    final data = _handleResponse(response) as Map<String, dynamic>;
+    return PostModel.fromJson(data);
+  }
+
   /// Criar uma nova postagem no feed: POST /posts
   Future<PostModel> createPost(String message) async {
     final url = Uri.parse('$baseUrl/posts');

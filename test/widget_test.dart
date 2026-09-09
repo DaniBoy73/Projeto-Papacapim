@@ -11,6 +11,7 @@ import 'package:projeto_papacapim/screens/profile_screen.dart';
 import 'package:projeto_papacapim/widgets/user_tile.dart';
 import 'package:projeto_papacapim/widgets/avatar/app_avatar.dart';
 import 'package:projeto_papacapim/widgets/photo_source_bottom_sheet.dart';
+import 'package:projeto_papacapim/widgets/post_card.dart';
 
 class MockHttpOverrides extends HttpOverrides {
   @override
@@ -302,5 +303,37 @@ void main() {
     final success = await appState.updateAvatar(newAvatar);
     expect(success, isTrue);
     expect(appState.currentUser.avatarUrl, newAvatar);
+  });
+
+  testWidgets('PostCard renders real parent author arroba and never @usuario for replies', (WidgetTester tester) async {
+    final appState = AppState();
+    final replyPost = PostModel(
+      id: '2539',
+      authorId: 'testing',
+      authorName: 'Testing User',
+      authorLogin: 'testing',
+      authorAvatarUrl: '',
+      content: 'Mensagem de resposta de teste',
+      createdAt: DateTime.now(),
+      likesCount: 1,
+      commentsCount: 0,
+      parentPostId: '2480',
+      parentAuthorLogin: 'daniboy',
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AppStateProvider(
+          state: appState,
+          child: Scaffold(
+            body: PostCard(post: replyPost),
+          ),
+        ),
+      ),
+    );
+
+    // Deve exibir o @handle real do autor do post pai
+    expect(find.text('Respondendo a @daniboy'), findsOneWidget);
+    expect(find.textContaining('@usuario'), findsNothing);
   });
 }

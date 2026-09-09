@@ -101,31 +101,58 @@ class PostCard extends StatelessWidget {
             // Banner visual de Resposta (se este post for resposta a outro)
             if (post.parentPostId != null) ...[
               const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: AppTheme.primaryColor.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.2)),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.reply, size: 14, color: AppTheme.primaryColor),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        'Respondendo a @${post.parentAuthorLogin ?? 'usuario'}',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.primaryColor,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+              Builder(
+                builder: (context) {
+                  final state = AppStateProvider.of(context);
+                  final parentLogin = (post.parentAuthorLogin != null && post.parentAuthorLogin!.isNotEmpty)
+                      ? post.parentAuthorLogin!
+                      : state.getParentAuthorLogin(post.parentPostId);
+
+                  final hasResolved = parentLogin != null && parentLogin.isNotEmpty;
+                  final labelText = hasResolved
+                      ? 'Respondendo a @$parentLogin'
+                      : 'Respondendo a postagem';
+
+                  return InkWell(
+                    onTap: hasResolved
+                        ? () {
+                            final target = state.getUserByLogin(parentLogin);
+                            Navigator.pushNamed(
+                              context,
+                              AppRoutes.profile,
+                              arguments: target,
+                            );
+                          }
+                        : null,
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryColor.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.2)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.reply, size: 14, color: AppTheme.primaryColor),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              labelText,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: AppTheme.primaryColor,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
-                ),
+                  );
+                },
               ),
             ],
 
