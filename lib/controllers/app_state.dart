@@ -674,17 +674,18 @@ class AppState extends ChangeNotifier {
 
   /// Busca postagens na API por termo
   Future<List<PostModel>> searchPosts(String query) async {
-    if (query.trim().isEmpty) return _allPosts;
+    final clean = query.trim().replaceAll('@', '');
+    if (clean.isEmpty && query.trim().isEmpty) return _allPosts;
 
     if (api.isAuthenticated) {
       try {
-        final apiResults = await api.getPosts(search: query.trim());
+        final apiResults = await api.getPosts(search: clean.isNotEmpty ? clean : query.trim());
         _registerPostAuthors(apiResults);
         return _resolveParentAuthors(apiResults);
       } catch (_) {}
     }
 
-    final term = query.toLowerCase().trim();
+    final term = clean.toLowerCase();
     return _allPosts
         .where((p) =>
             p.content.toLowerCase().contains(term) ||
@@ -732,9 +733,10 @@ class AppState extends ChangeNotifier {
 
   /// Busca usuários na API por termo (ou retorna todos os usuários reais se query vazia)
   Future<List<UserModel>> searchUsers(String query) async {
+    final clean = query.trim().replaceAll('@', '');
     if (api.isAuthenticated) {
       try {
-        final apiResults = await api.searchUsers(query.trim());
+        final apiResults = await api.searchUsers(clean);
         for (final u in apiResults) {
           cacheUser(u);
         }
@@ -742,9 +744,9 @@ class AppState extends ChangeNotifier {
       } catch (_) {}
     }
 
-    if (query.trim().isEmpty) return _users;
+    if (clean.isEmpty) return _users;
 
-    final term = query.toLowerCase().trim();
+    final term = clean.toLowerCase();
     return _users
         .where((u) =>
             u.name.toLowerCase().contains(term) ||
