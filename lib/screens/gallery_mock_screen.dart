@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../theme/app_theme.dart';
 import '../controllers/app_state_provider.dart';
+import '../widgets/photo_source_bottom_sheet.dart';
 
 /// SIMULADOR DE GALERIA DE FOTOS DO CELULAR (TELA GALERIA MOCK):
 /// Simula a grade de fotos da galeria do dispositivo para escolha de avatar.
@@ -29,23 +31,47 @@ class GalleryMockScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Galeria de Fotos Simulada'),
+        title: const Text('Galeria de Fotos'),
       ),
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    PhotoSourceBottomSheet.pickAndUploadImage(
+                      context,
+                      source: ImageSource.gallery,
+                      state: state,
+                      messenger: ScaffoldMessenger.of(context),
+                    );
+                  },
+                  icon: const Icon(Icons.folder_open),
+                  label: const Text('Abrir Arquivo do Dispositivo / Galeria Real'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryColor,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ),
+            ),
             const Padding(
-              padding: EdgeInsets.all(16.0),
+              padding: EdgeInsets.symmetric(horizontal: 16.0),
               child: Text(
-                'Selecione uma imagem da sua galeria:',
+                'Ou escolha uma foto de simulação:',
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 14,
                   fontWeight: FontWeight.bold,
                   color: AppTheme.textColor,
                 ),
               ),
             ),
+            const SizedBox(height: 8),
             Expanded(
               child: GridView.builder(
                 padding: const EdgeInsets.symmetric(horizontal: 16),

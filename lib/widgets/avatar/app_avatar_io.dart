@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 
 /// Implementação para plataformas não-web (Mobile, Desktop, Testes de Widget)
@@ -10,19 +11,38 @@ Widget buildPlatformAvatar({
   Widget? overlayBadge,
   VoidCallback? onTap,
 }) {
+  final hasImage = imageUrl.isNotEmpty;
+
+  ImageProvider? imageProvider;
+  if (hasImage) {
+    if (imageUrl.startsWith('data:image')) {
+      try {
+        final commaIdx = imageUrl.indexOf(',');
+        final b64 = commaIdx != -1 ? imageUrl.substring(commaIdx + 1) : imageUrl;
+        imageProvider = MemoryImage(base64Decode(b64));
+      } catch (_) {
+        imageProvider = null;
+      }
+    } else {
+      imageProvider = NetworkImage(imageUrl);
+    }
+  }
+
   Widget avatar = CircleAvatar(
     radius: size / 2,
     backgroundColor: backgroundColor,
-    backgroundImage: imageUrl.isNotEmpty ? NetworkImage(imageUrl) : null,
-    onBackgroundImageError: (_, _) {},
-    child: Text(
-      fallbackText,
-      style: TextStyle(
-        fontSize: size * 0.4,
-        fontWeight: FontWeight.bold,
-        color: textColor,
-      ),
-    ),
+    backgroundImage: imageProvider,
+    onBackgroundImageError: hasImage ? (_, _) {} : null,
+    child: hasImage
+        ? null
+        : Text(
+            fallbackText,
+            style: TextStyle(
+              fontSize: size * 0.4,
+              fontWeight: FontWeight.bold,
+              color: textColor,
+            ),
+          ),
   );
 
   if (overlayBadge != null) {

@@ -71,7 +71,7 @@ class AppState extends ChangeNotifier {
           id: api.currentUserLogin ?? loginInput.trim(),
           name: loginInput.trim(),
           login: api.currentUserLogin ?? loginInput.trim(),
-          avatarUrl: 'https://ui-avatars.com/api/?name=${Uri.encodeComponent(loginInput.trim())}&background=10B981&color=fff&size=150&bold=true',
+          avatarUrl: '',
           followersCount: 0,
           followingCount: 0,
           isCurrentUser: true,
@@ -398,20 +398,49 @@ class AppState extends ChangeNotifier {
           imageData: imageData,
         );
 
+        final effectiveAvatar = updatedUser.avatarUrl.isNotEmpty
+            ? updatedUser.avatarUrl
+            : (avatarUrl ?? _currentUser.avatarUrl);
+
         _currentUser = updatedUser.copyWith(
           isCurrentUser: true,
-          avatarUrl: avatarUrl ?? updatedUser.avatarUrl,
+          avatarUrl: effectiveAvatar,
         );
+
+        // Atualiza também o avatar no cache de usuários locais
+        final userIndex = _users.indexWhere((u) => u.login.toLowerCase() == _currentUser.login.toLowerCase());
+        if (userIndex != -1) {
+          _users[userIndex] = _currentUser;
+        }
+
+        // Atualiza o avatar nas postagens do autor atual no feed
+        if (effectiveAvatar.isNotEmpty) {
+          _allPosts = _allPosts.map((p) {
+            if (p.authorLogin.toLowerCase() == _currentUser.login.toLowerCase()) {
+              return p.copyWith(authorAvatarUrl: effectiveAvatar);
+            }
+            return p;
+          }).toList();
+        }
 
         // Se a senha foi alterada, a API encerra as sessões existentes; refazemos o login
         if (password != null && password.isNotEmpty) {
           await api.login(_currentUser.login, password);
         }
       } else {
+        final offlineAvatar = (avatarUrl != null && avatarUrl.isNotEmpty)
+            ? avatarUrl
+            : (imageData != null ? 'data:image/jpeg;base64,$imageData' : _currentUser.avatarUrl);
+
         _currentUser = _currentUser.copyWith(
           name: name.trim(),
-          avatarUrl: avatarUrl ?? _currentUser.avatarUrl,
+          avatarUrl: offlineAvatar,
         );
+
+        final userIndex = _users.indexWhere((u) => u.login.toLowerCase() == _currentUser.login.toLowerCase());
+        if (userIndex != -1) {
+          _users[userIndex] = _currentUser;
+        }
       }
 
       _isLoading = false;
@@ -426,9 +455,9 @@ class AppState extends ChangeNotifier {
   }
 
   /// Atualiza o avatar local e na API
-  Future<void> updateAvatar(String newAvatarUrl, {String? imageData}) async {
-    await updateProfile(
-      name: _currentUser.name,
+  Future<bool> updateAvatar(String newAvatarUrl, {String? imageData, String? name}) async {
+    return await updateProfile(
+      name: name ?? _currentUser.name,
       avatarUrl: newAvatarUrl,
       imageData: imageData,
     );
@@ -567,9 +596,9 @@ class AppState extends ChangeNotifier {
       (u) => u.login.toLowerCase() == clean,
       orElse: () => fallback ?? UserModel(
         id: clean,
-        name: clean == 'juliana_tech' ? 'Juliana Tech' : clean,
+        name: clean,
         login: clean,
-        avatarUrl: 'https://ui-avatars.com/api/?name=${Uri.encodeComponent(clean)}&background=10B981&color=fff&size=150&bold=true',
+        avatarUrl: '',
         followersCount: 0,
         followingCount: 0,
         isFollowedByCurrentUser: false,

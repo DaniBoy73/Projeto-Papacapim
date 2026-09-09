@@ -6,7 +6,7 @@ import 'app_avatar_impl.dart';
 /// Na Web, renderiza o elemento <img> nativo do navegador para contornar limitações de CORS
 /// do CanvasKit. Em outras plataformas, utiliza o pipeline nativo de imagens do Flutter.
 class AppAvatar extends StatelessWidget {
-  final String imageUrl;
+  final String? imageUrl;
   final double radius;
   final String name;
   final Widget? overlayBadge;
@@ -16,7 +16,7 @@ class AppAvatar extends StatelessWidget {
 
   const AppAvatar({
     super.key,
-    required this.imageUrl,
+    this.imageUrl,
     this.radius = 20,
     this.name = '',
     this.overlayBadge,
@@ -31,9 +31,10 @@ class AppAvatar extends StatelessWidget {
     final fallbackChar = name.trim().isNotEmpty
         ? name.trim()[0].toUpperCase()
         : '?';
+    final cleanUrl = imageUrl?.trim() ?? '';
 
     return buildPlatformAvatar(
-      imageUrl: imageUrl,
+      imageUrl: cleanUrl,
       size: effectiveSize,
       fallbackText: fallbackChar,
       backgroundColor: backgroundColor ?? AppTheme.primaryLight,

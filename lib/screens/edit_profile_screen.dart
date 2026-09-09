@@ -155,7 +155,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   name: state.currentUser.name,
                   overlayBadge: InkWell(
                     onTap: () {
-                      PhotoSourceBottomSheet.show(context);
+                      PhotoSourceBottomSheet.show(
+                        context,
+                        currentName: _nameController.text.trim(),
+                      );
                     },
                     child: Container(
                       padding: const EdgeInsets.all(8),
@@ -174,7 +177,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 const SizedBox(height: 10),
                 TextButton.icon(
                   onPressed: () {
-                    PhotoSourceBottomSheet.show(context);
+                    PhotoSourceBottomSheet.show(
+                      context,
+                      currentName: _nameController.text.trim(),
+                    );
                   },
                   icon: const Icon(Icons.photo_camera_back_outlined, size: 18),
                   label: const Text('Alterar Foto de Perfil'),

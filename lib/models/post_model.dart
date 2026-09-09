@@ -39,11 +39,10 @@ class PostModel {
     final userMap = json['user'] is Map<String, dynamic> ? json['user'] as Map<String, dynamic> : null;
     final authorLogin = (userMap?['login'] ?? json['authorLogin'] ?? '').toString();
     final authorName = (userMap?['name'] ?? json['authorName'] ?? authorLogin).toString();
-    final cleanAuthor = authorName.trim().isNotEmpty ? authorName.trim() : authorLogin.trim();
     final rawProfileImage = userMap?['profile_image'] ?? json['authorAvatarUrl'];
     final authorAvatar = (rawProfileImage != null && rawProfileImage.toString().isNotEmpty)
         ? rawProfileImage.toString()
-        : 'https://ui-avatars.com/api/?name=${Uri.encodeComponent(cleanAuthor)}&background=10B981&color=fff&size=150&bold=true';
+        : '';
 
     DateTime parsedDate;
     if (json['created_at'] != null) {
@@ -73,6 +72,9 @@ class PostModel {
       parentContentPreview: json['parentContentPreview']?.toString(),
     );
   }
+
+  /// Indica se o autor possui foto de perfil real cadastrada
+  bool get hasAuthorProfileImage => authorAvatarUrl.isNotEmpty;
 
   /// Converte o modelo de volta para formato Map/JSON
   Map<String, dynamic> toJson() {
